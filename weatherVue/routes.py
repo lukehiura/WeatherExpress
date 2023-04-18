@@ -29,7 +29,13 @@ posts = [
 @application.route("/")
 @application.route("/home")
 def home():
-    return render_template('home.html', posts=posts)
+    if 'AWS_EB_ENVIRONMENT_NAME' in os.environ:
+    # Running on AWS Elastic Beanstalk
+        api_key = os.environ.get('GOOGLE_API_KEY')
+    else:
+    # Running locally  
+        api_key = os.environ.get('GOOGLE_API_KEY')
+    return render_template('home.html', posts=posts, api_key=api_key)
 
 @application.route("/recents")
 def recents():
