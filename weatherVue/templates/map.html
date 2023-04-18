@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+{% block content %}
+
+    
+    <h1>Weather Chatbot</h1>
+    <div id="chatbox">
+        <div id="chatlog"></div>
+        <input type="text" id="userInput" />
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        const CHATGPT_API_ENDPOINT = "https://api.openai.com/v1/chat/completions";
+        const CHATGPT_API_KEY = "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"; // Replace with your actual ChatGPT API key
+
+        async function sendMessage() {
+            const userInput = $("#userInput").val();
+            if (userInput.trim() === "") {
+                return;
+            }
+
+            // Append user message to chat log
+            const chatlog = $("#chatlog");
+            chatlog.append(`<p><strong>You:</strong> ${userInput}</p>`);
+            chatlog.scrollTop(chatlog[0].scrollHeight);
+
+            // Send message to ChatGPT API
+            const response = await fetch(CHATGPT_API_ENDPOINT, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${CHATGPT_API_KEY}`
+                },
+                body: JSON.stringify({
+                    messages: [{
+                        role: "system",
+                        content: "You are a weather chatbot."
+                    }, {
+                        role: "user",
+                        content: userInput
+                    }]
+                })
+            });
+
+            const result = await response.json();
+            const botReply = result.choices[0].text;
+            // Append bot reply to chat log
+            chatlog.append(`<p><strong>Bot:</strong> ${botReply}</p>`);
+            chatlog.scrollTop(chatlog[0].scrollHeight);
+
+            // Clear user input
+            $("#userInput").val("");
+        }
+    </script>
+    
+
+{% endblock content %}

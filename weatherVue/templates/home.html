@@ -1,0 +1,184 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <div class="container">
+        <form id="weatherForm" class="searchcontainer">
+            <h2>WeatherVue</h2>
+            <input type="text" id="cityInput" class="form-control mb-2 mr-sm-2" placeholder="Enter City Name">
+            <select id="unitSelect" class="form-control mb-2 mr-sm-2" placeholder="Units">
+                <option value="" selected disabled>Select Units</option>
+                <option value="C">Celsius</option>
+                <option value="F">Fahrenheit</option>
+                <option value="K">Kelvin</option>
+            </select>
+            <button type="submit" class="btn btn-primary mb-2">Get Weather</button>
+        </form>
+        <div id="errorMessage" style="display:none; color:red; padding:0.6em; margin-left:20px;">Submission failed. Please try again.</div>
+        <script>
+            document.getElementById("weatherForm").addEventListener("submit", function(event) {
+                event.preventDefault();
+                var errorMessage = document.getElementById("errorMessage");
+                var unitSelect = document.getElementById("unitSelect");
+                var selectedUnits = unitSelect.value;
+                var cityname = cityInput.value
+                if (selectedUnits === "" || cityname === "")  {
+                    // Invalid units selected, show error message
+                    errorMessage.style.display = "block";
+                } else {
+                    // Valid units selected, hide error message
+                    errorMessage.style.display = "none";
+                    // Proceed with form submission or other actions
+                    // ...
+                }
+            });
+        </script>
+        <div id="weatherData" class="mt-3 md-8"></div>
+        
+        
+    </div>
+    <script>
+        // JavaScript code to handle form submission and API request
+        document.getElementById('weatherForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent form submission
+            var cityInput = document.getElementById('cityInput').value;
+            var unitSelect = document.getElementById('unitSelect').value;
+
+            fetch('/get_weather?city=' + cityInput + '&unit=' + unitSelect)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('weatherData').innerHTML = `
+                        
+                        <div class="card-body mt-3 md-8">
+                            <h4 class="text">Weather Summary</h5>
+                            <p class="text">${data.weather_summary}</p>
+                        </div>
+                        
+                        <div class="card-body mt-3 md-8">
+                            <h4 class="text">Weather Description</h4>
+                            <p class="text">${data.weather_description}</p>
+                        </div>
+                   
+                        <div class="row mt-3 md-8">
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="text">High Temperature (PM)</h6>
+                                        <p class="text">${data.high_temp_pm}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="text">High Temperature (AM)</h6>
+                                        <p class="text">${data.high_temp_am}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="text">High Temperature (Night)</h6>
+                                        <p class="text">${data.high_temp_night}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="text">Low Temperature (PM)</h6>
+                                        <p class="text">${data.low_temp_pm}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="text">Low Temperature (AM)</h6>
+                                        <p class="text">${data.low_temp_am}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="text">Low Temperature (Night)</h6>
+                                        <p class="text">${data.low_temp_night}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="text">Humidity (PM)</h6>
+                                        <p class="text">${data.humidity_pm}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="text">Humidity (AM)</h6>
+                                        <p class="text">${data.humidity_am}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="text">Humidity  (Night)</h6>
+                                        <p class="text">${data.humidity_night}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> 
+                        <div class="row mt-3">
+                            <h2>Weather Map</h2>
+                            
+                        </div>
+                    `;
+                })
+                .catch(error => console.error(error));
+        });
+    </script>
+    <div id="map" class="md-12 mt-3" style="height: 500px; width: 100%;"></div>"
+    <div id="image-container"></div>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAaccF2c64kfnoJFy8G4RmhYGI7ohOKrE4&callback=initMap" async defer></script>
+    <script>
+        var map;
+        function initMap() {
+          // Replace 'cityName' with your city name
+            document.getElementById('weatherForm').addEventListener('submit', function(event) {
+                event.preventDefault(); // Prevent form submission
+                var cityName = document.getElementById('cityInput').value;
+                // Make a request to the Google Maps Geocoding API to get latitude and longitude
+                var geocoder = new google.maps.Geocoder();
+                geocoder.geocode({'address': cityName}, function(results, status) {
+                    if (status === google.maps.GeocoderStatus.OK) {
+                    var latitude = results[0].geometry.location.lat();
+                    var longitude = results[0].geometry.location.lng();
+            
+                    var location = {lat: latitude, lng: longitude};
+                    map = new google.maps.Map(document.getElementById('map'), {
+                        center: location,
+                        zoom: 10
+                    });
+                    var marker = new google.maps.Marker({
+                        position: location,
+                        map: map,
+                        title: cityName
+                    });
+                    } else {
+                    console.log('Failed to geocode city: ' + cityName);
+                    }
+                });
+            });
+        }
+    </script>
+
+    
+{% endblock content %}

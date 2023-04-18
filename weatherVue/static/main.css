@@ -1,0 +1,187 @@
+body {
+  background: black;
+  color: black;
+  margin-top: 5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-image: url(https://source.unsplash.com/random/vertical/?girls);
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+h5, h6 {
+  color: #444444;
+  font-size: 80%;
+  height: 80%
+}
+
+h1,h2,h3,h4,h5{
+  color: white
+
+}
+
+#posts {
+  color:white
+}
+
+.card-body{
+  background: #000000d0;
+  padding: 2em;
+  border-radius: 30px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0em;
+}
+
+.card{
+  background: none;
+  border: none;
+}
+
+.searchcontainer{
+  background: #000000d0;
+  padding: 2em;
+  border-radius: 30px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0em;
+}
+
+.aboutContainer {
+  background: #000000d0;
+  padding: 1.5em;
+  border-radius: 30px;
+  margin: 0em;
+}
+
+.text{
+  color: white;
+}
+
+.navbar {
+  background-color: #000000d0;
+}
+
+.form-check{
+  color:white
+}
+
+.form-group{
+  color:white
+}
+.bg-steel {
+  background-color: #5f788a;
+}
+
+.site-header .navbar-nav .nav-link {
+  color: #cbd5db;
+}
+
+.site-header .navbar-nav .nav-link:hover {
+  color: #ffffff;
+}
+
+.site-header .navbar-nav .nav-link.active {
+  font-weight: 500;
+}
+
+.content-section {
+  background: #000000d0;
+  padding: 1em;
+  border-radius: 30px;
+  margin-bottom: 10px;
+  width: 100%;
+  
+} 
+
+.forms-section {
+  background: #000000d0;
+  padding: 1em;
+  border-radius: 30px;
+  margin-bottom: 10px;
+  width: 100%;
+  max-width: 420px;
+  
+} 
+
+.other-section {
+  background: #000000d0;
+  padding: 0.8em;
+  border-radius: 30px;
+  margin-bottom: 20px;
+  max-width: 240px;
+  width: 100%;
+
+}
+
+.article-title {
+  color: #444444;
+}
+
+.article-title:hover {
+  color: #428bca;
+  text-decoration: none;
+}
+
+.article-content {
+  white-space: pre-line;
+}
+
+.article-img {
+  height: 65px;
+  width: 65px;
+  margin-right: 16px;
+}
+
+.article-metadata {
+  padding-bottom: 1px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #e3e3e3
+}
+
+.article-metadata a:hover {
+  color: #333;
+  text-decoration: none;
+}
+
+.article-svg {
+  width: 25px;
+  height: 25px;
+  vertical-align: middle;
+}
+
+.account-img {
+  height: 125px;
+  width: 125px;
+  margin-right: 20px;
+  margin-bottom: 16px;
+}
+
+.account-heading {
+  font-size: 2.5rem;
+}
+
+#image-container {
+    margin-top: 20px;
+    text-align: center;
+}
+#city-image {
+    max-width: 100%;
+    height: auto;
+}
+
+#unitSelect option{
+  font-size: 10px;
+  padding: 10px;
+}
+
+.errorMessage {
+  padding: 1em;
+  display: none;
+  color: red;
+  margin-left: 1000px;
+  border: 5px solid red;
+  
+}
