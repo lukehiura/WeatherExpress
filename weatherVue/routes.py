@@ -26,24 +26,24 @@ posts = [
 ]
 
 
-@applicationlication.route("/")
-@applicationlication.route("/home")
+@application.route("/")
+@application.route("/home")
 def home():
     return render_template('home.html', posts=posts)
 
-@applicationlication.route("/recents")
+@application.route("/recents")
 def recents():
     page = request.args.get('page', 1, type=int)
     posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=5)
     return render_template('recents.html', posts=posts)
 
 
-@applicationlication.route("/about")
+@application.route("/about")
 def about():
     return render_template('about.html', title='About')
 
 
-@applicationlication.route("/register", methods=['GET', 'POST'])
+@application.route("/register", methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('home'))
@@ -57,7 +57,7 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
 
-@applicationlication.route("/login", methods=['GET', 'POST'])
+@application.route("/login", methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('home'))
@@ -72,7 +72,7 @@ def login():
             flash('Login Unsuccessful. Please check email and password', 'danger')
     return render_template('login.html', title='Login', form=form)
 
-@applicationlication.route('/get_weather', methods=['GET'])
+@application.route('/get_weather', methods=['GET'])
 def get_weather():
     city = request.args.get('city')
     unit = request.args.get('unit', 'C') # default unit is 'C'
@@ -95,7 +95,7 @@ def get_weather():
         'humidity_night' : humidity[2]
     })
 
-@applicationlication.route('/map', methods=['GET'])
+@application.route('/map', methods=['GET'])
 def map():
     return render_template('map.html')
 
