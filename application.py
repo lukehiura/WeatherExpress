@@ -1,3 +1,3 @@
-from weatherVue import app
+from weatherVue import application
 if __name__ == '__main__':
-    app.run(port=80)
+    application.run(port=80)
