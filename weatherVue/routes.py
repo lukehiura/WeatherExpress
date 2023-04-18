@@ -29,19 +29,15 @@ posts = [
 @application.route("/")
 @application.route("/home")
 def home():
-    if 'AWS_EB_ENVIRONMENT_NAME' in os.environ:
-    # Running on AWS Elastic Beanstalk
-        api_key = os.environ.get('GOOGLE_API_KEY')
-    else:
-    # Running locally  
-        api_key = os.environ.get('GOOGLE_API_KEY')
+    api_key = os.environ.get('GOOGLE_API_KEY')
     return render_template('home.html', posts=posts, api_key=api_key)
 
-@application.route("/recents")
-def recents():
+
+@application.route("/blog")
+def blog():
     page = request.args.get('page', 1, type=int)
     posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=5)
-    return render_template('recents.html', posts=posts)
+    return render_template('blog.html', posts=posts)
 
 
 @application.route("/about")
@@ -63,6 +59,7 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
 
+
 @application.route("/login", methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -77,6 +74,7 @@ def login():
         else:
             flash('Login Unsuccessful. Please check email and password', 'danger')
     return render_template('login.html', title='Login', form=form)
+
 
 @application.route('/get_weather', methods=['GET'])
 def get_weather():
