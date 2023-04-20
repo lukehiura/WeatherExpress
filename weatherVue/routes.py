@@ -3,10 +3,11 @@ from Get_Weather import get_response, get_weather_summary, get_temperatures, get
 from weatherVue.forms import (RegistrationForm, LoginForm, UpdateAccountForm,
                                 PostForm, RequestResetForm, ResetPasswordForm)
 from weatherVue.models import User, Post
-from weatherVue import application, db, bcrypt, mail
+from weatherVue import application, mongo, bcrypt, mail
 from flask_login import login_user, current_user, logout_user, login_required
 from flask_mail import Message
 from PIL import Image
+from pymongo.errors import OperationFailure
 import os
 import secrets
 
@@ -53,8 +54,7 @@ def register():
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         user = User(username=form.username.data, email=form.email.data, password=hashed_password)
-        db.session.add(user)
-        db.session.commit()
+        user.save()
         flash('Your account has been created! You are now able to log in', 'success')
         return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
@@ -66,8 +66,12 @@ def login():
         return redirect(url_for('home'))
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if user and bcrypt.check_password_hash(user.password, form.password.data):
+        email = form.email.data
+        password = form.password.data
+        user_data = mongo.db.users.find_one({'email': email})
+
+        if user_data and bcrypt.check_password_hash(user_data['password'], password):
+            user = User(username=user_data['username'], email=user_data['email'], password=user_data['password'])
             login_user(user, remember=form.remember.data)
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('home'))
@@ -132,7 +136,7 @@ def account():
             current_user.image_file = picture_file
         current_user.username = form.username.data
         current_user.email = form.email.data
-        db.session.commit()
+        current_user.save()
         flash('Your account has been updated!', 'success')
         return redirect(url_for('account'))
     elif request.method == 'GET':
@@ -148,9 +152,12 @@ def account():
 def new_post():
     form = PostForm()
     if form.validate_on_submit():
-        post = Post(title=form.title.data, content=form.content.data, author=current_user)
-        db.session.add(post)
-        db.session.commit()
+        post = {
+            'title' : form.title.data,
+            'content' : form.content.data,
+            'author' : current_user.username
+        }
+        mongo.db.posts.insert_one(post)
         flash('Your post has been created!', 'success')
         return redirect(url_for('home'))
     return render_template('create_post.html', title='New Post',
@@ -166,14 +173,17 @@ def post(post_id):
 @application.route("/post/<int:post_id>/update", methods=['GET', 'POST'])
 @login_required
 def update_post(post_id):
-    post = Post.query.get_or_404(post_id)
-    if post.author != current_user:
+    post = mongo.db.posts.find_one({'_id': post_id})
+    if post is None:
+        abort(404)
+    if post['author'] != current_user.username:
         abort(403)
     form = PostForm()
     if form.validate_on_submit():
+        mongo.db.posts.update_one({'_id': post_id},
+                                  {'$set': {'title': form.title.data, 'content': form.content.data}})
         post.title = form.title.data
         post.content = form.content.data
-        db.session.commit()
         flash('Your post has been updated!', 'success')
         return redirect(url_for('post', post_id=post.id))
     elif request.method == 'GET':
@@ -186,12 +196,25 @@ def update_post(post_id):
 @application.route("/post/<int:post_id>/delete", methods=['POST'])
 @login_required
 def delete_post(post_id):
-    post = Post.query.get_or_404(post_id)
-    if post.author != current_user:
+    post = mongo.db.posts.find_one({'_id': post_id})
+    if not post:
+        # If post is not found, raise a 404 error
+        abort(404)
+
+    # Verify if the post author is the current user
+    if post['author'] != current_user:
+        # If post author does not match current user, raise a 403 error
         abort(403)
-    db.session.delete(post)
-    db.session.commit()
-    flash('Your post has been deleted!', 'success')
+    try:
+        # Delete the post from MongoDB
+        mongo.db.posts.delete_one({'_id': post_id})
+        flash('Your post has been deleted!', 'success')
+        return redirect(url_for('home'))
+    except OperationFailure as e:
+        # Handle any errors that may occur during the delete operation
+        # For example, if the user does not have the necessary permissions
+        print(f'Failed to delete post: {e}')
+        abort(500)
     return redirect(url_for('home'))
 
 
@@ -234,15 +257,26 @@ def reset_request():
 def reset_token(token):
     if current_user.is_authenticated:
         return redirect(url_for('home'))
-    user = User.verify_reset_token(token)
+    
+    user = mongo.db.users.find_one({'reset_token': token})
     if user is None:
         flash('That is an invalid or expired token', 'warning')
         return redirect(url_for('reset_request'))
+    
     form = ResetPasswordForm()
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         user.password = hashed_password
-        db.session.commit()
-        flash('Your password has been updated! You are now able to log in', 'success')
-        return redirect(url_for('login'))
+        try:
+            mongo.db.users.update_one({'reset_token': token}, {'$set': {'password': hashed_password}})
+            flash('Your password has been updated! You are now able to log in', 'success')
+            return redirect(url_for('login'))
+        
+        except OperationFailure as e:
+            # Handle any errors that may occur during the update operation
+            # For example, if the user does not have the necessary permissions
+            print(f'Failed to update password: {e}')
+            abort(500)
+            return redirect(url_for('login'))
+        
     return render_template('reset_token.html', title='Reset Password', form=form)

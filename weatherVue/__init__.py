@@ -4,11 +4,23 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail
+from flask_pymongo import PyMongo
+from pymongo import MongoClient
+
+
 
 application = Flask(__name__)
 application.config['SECRET_KEY'] = '5791628bb0b13ce0c676dfde280ba245'
-application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-db = SQLAlchemy(application)
+application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'   
+application.config['MONGO_URI'] = 'mongodb+srv://lhiur001:0pemDaAuQTiqvR9L@profiles-db.jovxyhy.mongodb.net/profiles-db?retryWrites=true&w=majority'
+mongo = PyMongo(application)
+try:
+    # Fetch data from a MongoDB collection
+    data = mongo.db.collection_name.find_one()
+    print('PyMongo connection test: Success')
+except Exception as e:
+    print('PyMongo connection test: Failed. Error: {}'.format(e))
+
 bcrypt = Bcrypt(application)
 login_manager = LoginManager(application)
 login_manager.login_view = 'login'
@@ -22,3 +34,6 @@ mail = Mail(application)
 
 
 from weatherVue import routes
+
+
+
