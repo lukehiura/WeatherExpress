@@ -5,6 +5,7 @@ from flask_login import UserMixin
 from bson.objectid import ObjectId
 
 
+
 @login_manager.user_loader
 def load_user(user_id):
     """Callback function to load a user from MongoDB based on user_id."""
@@ -22,27 +23,27 @@ def load_user(user_id):
 
 
 class User(UserMixin):
-    def __init__(self, username, email, password):
+    def __init__(self, username, email, password, image_file=None):
         self._username = username
         self._email = email
-        self._image_file = 'default.jpg'
+        self._image_file = 'default.jpg' or image_file
         self._password = password
-        self._id = str(ObjectId())
+        self._id = None
+        
 
     def save(self):
         user_data = {
-            '_id' : self._id,
             'username' : self._username,
             'email' : self._email,
             'image_file' : self._image_file,
             'password' : self._password
         }
         result = mongo.db.users.insert_one(user_data)
-        self.id = result.inserted_id
+        self._id = result.inserted_id
     
     def get_id(self):
         """Return a unique identifier for the user."""
-        return self._id
+        return str(self._id)
 
     def get(cls, user_id):
         user_data = mongo.db.users.find_one({'_id': ObjectId(user_id)})

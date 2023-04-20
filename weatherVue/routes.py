@@ -4,7 +4,7 @@ from weatherVue.forms import (RegistrationForm, LoginForm, UpdateAccountForm,
                                 PostForm, RequestResetForm, ResetPasswordForm)
 from weatherVue.models import User, Post
 from weatherVue import application, mongo, bcrypt, mail
-from flask_login import login_user, current_user, logout_user, login_required
+from flask_login import login_user, current_user, logout_user, login_required, LoginManager
 from flask_mail import Message
 from PIL import Image
 from pymongo.errors import OperationFailure
@@ -25,6 +25,7 @@ posts = [
         'date_posted': 'April 21, 2018'
     }
 ]
+
 
 
 @application.route("/")
@@ -63,15 +64,21 @@ def register():
 @application.route("/login", methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
+        
         return redirect(url_for('home'))
     form = LoginForm()
+
     if form.validate_on_submit():
         email = form.email.data
         password = form.password.data
         user_data = mongo.db.users.find_one({'email': email})
 
         if user_data and bcrypt.check_password_hash(user_data['password'], password):
-            user = User(username=user_data['username'], email=user_data['email'], password=user_data['password'])
+            # Check if 'image_file' key is present in user_data
+            if 'image_file' in user_data:
+                user = User(username=user_data['username'], email=user_data['email'], password=user_data['password'], image_file=user_data['image_file'])
+            else:
+                user = User(username=user_data['username'], email=user_data['email'], password=user_data['password'])  # Use default image_file
             login_user(user, remember=form.remember.data)
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('home'))

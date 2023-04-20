@@ -21,6 +21,7 @@ class RegistrationForm(FlaskForm):
 
     def validate_username(self, username):
         try:
+            print(current_user.email)
             user = mongo.db.users.find_one({'username': username.data})
         except OperationFailure as e:
             raise ValidationError('Failed to query MongoDB: {}'.format(e))
@@ -56,22 +57,18 @@ class UpdateAccountForm(FlaskForm):
     submit = SubmitField('Update')
 
     def validate_username(self, username):
-        try:
-            user = mongo.db.users.find_one({'username': username.data})
-        except OperationFailure as e:
-            raise ValidationError('Failed to query MongoDB: {}'.format(e))
-
-        if user:
-            raise ValidationError('That username is taken. Please choose a different one.')
+        
+        if username.data != current_user.username:
+            users = mongo.db.users.find({'username': username.data})
+            if users.count() > 0:
+                raise ValidationError('That username is taken. Please choose a different one.')
+        
 
     def validate_email(self, email):
-        try:
-            user = mongo.db.users.find_one({'email': email.data})
-        except OperationFailure as e:
-            raise ValidationError('Failed to query MongoDB: {}'.format(e))
-
-        if user:
-            raise ValidationError('That email is taken. Please choose a different one.')
+        if email.data != current_user.email:
+            users = mongo.db.users.find({'email': email.data})
+            if users.count() > 0:
+                raise ValidationError('That email is taken. Please choose a different one.')
     
 class PostForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])
