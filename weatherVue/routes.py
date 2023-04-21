@@ -1,4 +1,4 @@
-from flask import request, jsonify, render_template, url_for, flash, redirect, abort
+from flask import request, jsonify, render_template, url_for, flash, redirect, abort, session
 from Get_Weather import get_response, get_weather_summary, get_temperatures, get_humidity
 from weatherVue.forms import (RegistrationForm, LoginForm, UpdateAccountForm,
                                 PostForm, RequestResetForm, ResetPasswordForm)
@@ -75,11 +75,23 @@ def login():
 
         if user_data and bcrypt.check_password_hash(user_data['password'], password):
             # Check if 'image_file' key is present in user_data
+            print("testinng userdata login", str(user_data['_id']))
             if 'image_file' in user_data:
-                user = User(username=user_data['username'], email=user_data['email'], password=user_data['password'], image_file=user_data['image_file'])
+                user = User(
+                            username=user_data['username'], 
+                            email=user_data['email'],
+                            password=user_data['password'], 
+                            image_file=user_data['image_file'],
+                            id=user_data['_id'])
             else:
-                user = User(username=user_data['username'], email=user_data['email'], password=user_data['password'])  # Use default image_file
+                user = User(username=user_data['username'], 
+                            email=user_data['email'], 
+                            password=user_data['password'], 
+                            id=user_data['_id']) # Use default image_file
+            
+            print("before loginuser", session)
             login_user(user, remember=form.remember.data)
+            print("after loginuser", session)
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('home'))
         else:

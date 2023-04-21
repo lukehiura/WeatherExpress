@@ -1,8 +1,9 @@
 from datetime import datetime 
 from itsdangerous import URLSafeTimedSerializer as Serializer
 from weatherVue import mongo, login_manager, application
-from flask_login import UserMixin
+from flask_login import UserMixin, current_user
 from bson.objectid import ObjectId
+from flask import session
 
 
 
@@ -11,24 +12,29 @@ def load_user(user_id):
     """Callback function to load a user from MongoDB based on user_id."""
     # Assuming you have a MongoDB collection named "users"
     # and the User class has a "_id" attribute as shown in the example above
-    user_data = mongo.db.users.find_one({'_id': user_id})
+    print('userid input',user_id)
+    user_data = mongo.db.users.find_one({'_id': ObjectId(user_id)})
+    print('userdata', user_data)
+    print(session)
     if user_data:
         return User(
             username=user_data['username'],
             email=user_data['email'],
             password=user_data['password'],
-            image_file=user_data['image_file']
+            image_file=user_data['image_file'],
+            id=user_data['_id']
         )
     return None
 
 
 class User(UserMixin):
-    def __init__(self, username, email, password, image_file=None):
+    def __init__(self, username, email, password, id, image_file=None):
         self._username = username
         self._email = email
-        self._image_file = 'default.jpg' or image_file
+        self._id = id
         self._password = password
-        self._id = None
+        self._image_file = 'default.jpg' or image_file
+        
         
 
     def save(self):
