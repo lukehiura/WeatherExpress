@@ -4,6 +4,7 @@ from weatherVue import mongo, login_manager, application
 from flask_login import UserMixin, current_user
 from bson.objectid import ObjectId
 from flask import session
+from mongoengine.fields import ReferenceField
 
 
 
@@ -33,8 +34,19 @@ class User(UserMixin):
         self._email = email
         self._id = id
         self._password = password
-        self._image_file = 'default.jpg' or image_file
-        
+        if image_file:
+            self._image_file = image_file
+        else:
+            self._image_file = 'default.jpg'
+    
+    def to_dict(self):
+        return {
+            'username': self._username,
+            'email': self._email,
+            'id': self._id,
+            'password': self._password,
+            'image_file': self._image_file
+        }
         
 
     def save(self):
@@ -50,6 +62,19 @@ class User(UserMixin):
     def get_id(self):
         """Return a unique identifier for the user."""
         return str(self._id)
+    
+    def get_username(self):
+        return self._username
+    
+    def get_image_file(self):
+        return self._image_file
+    
+    def get_password(self):
+        return self._password
+    
+    def get_email(self):
+        return self._email
+
 
     def get(cls, user_id):
         user_data = mongo.db.users.find_one({'_id': ObjectId(user_id)})
@@ -82,22 +107,59 @@ class User(UserMixin):
 
 
 class Post:
-    def __init__(self, title, date_posted, content, user_id):
+    def __init__(self, title, content, user_id, date_posted=None):
         self.title = title
-        self.date_posted = date_posted
+        self.date_posted = date_posted or datetime.utcnow()
         self.content = content
         self.user_id = user_id
 
+    def get_title(self):
+        return self.title
+
+    def get_date_posted(self):
+        return self.date_posted
+
+    def get_content(self):
+        return self.content
+
+    def get_user_id(self):
+        return self.user_id
+
+
+    def to_dict(self):
+        """Convert Post object to a dictionary."""
+        post_dict = {
+            'title': self.title,
+            'date_posted': self.date_posted,
+            'content': self.content,
+            'user_id': self.user_id
+        }
+        return post_dict
+    
+
+    def get_user_image_file(self):
+        """Get Image file associated to user_id"""
+        user = mongo.db.users.find_one({'_id': self.user_id})
+        if user:
+            return user['image_file']
+        return None
+    
+    def get_username(self):
+        """Retrieve the username associated with the user_id."""
+        user = mongo.db.users.find_one({'_id': self.user_id})
+        return user['username'] if user else None
+
     def save(self):
-        # Insert the post object into MongoDB
+        """Insert the post object into MongoDB"""
         post_data = {
             'title': self.title,
-            'date_posted': datetime.datetime.utcnow(),
+            'date_posted': self.date_posted,
             'content': self.content,
             'user_id': self.user_id
         }
         result = mongo.db.posts.insert_one(post_data)
         self.id = result.inserted_id
+
 
     @classmethod
     def get(cls, post_id):

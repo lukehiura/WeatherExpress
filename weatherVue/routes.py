@@ -1,3 +1,6 @@
+
+import os
+import secrets
 from flask import request, jsonify, render_template, url_for, flash, redirect, abort, session
 from Get_Weather import get_response, get_weather_summary, get_temperatures, get_humidity
 from weatherVue.forms import (RegistrationForm, LoginForm, UpdateAccountForm,
@@ -8,8 +11,8 @@ from flask_login import login_user, current_user, logout_user, login_required, L
 from flask_mail import Message
 from PIL import Image
 from pymongo.errors import OperationFailure
-import os
-import secrets
+from math import ceil
+
 
 posts = [
     {
@@ -38,8 +41,18 @@ def home():
 @application.route("/blog")
 def blog():
     page = request.args.get('page', 1, type=int)
-    posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=5)
-    return render_template('blog.html', posts=posts)
+    per_page = 5
+    # Retrieve total count of documents in the 'posts' collection
+    total_posts = mongo.db.posts.count_documents({})
+    # Calculate the skip value based on the current page and per_page value
+    skip = (page - 1) * per_page
+    # Retrieve posts from MongoDB using the 'find' method with skip and limit
+    posts = mongo.db.posts.find().sort('date_posted', -1).skip(skip).limit(per_page)
+    num_posts = len(list(posts))
+    total_pages = ceil(total_posts / per_page)
+    print("array of posts", posts)
+
+    return render_template('blog.html', posts=posts, total_posts=total_posts, page=page, per_page=per_page, num_posts=num_posts, total_pages=total_pages)
 
 
 @application.route("/about")
@@ -159,7 +172,7 @@ def account():
         flash('Your account has been updated!', 'success')
         return redirect(url_for('account'))
     elif request.method == 'GET':
-        form.username.data = current_user.username
+        form.username.data = current_user.get_username()
         form.email.data = current_user.email
     image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
     return render_template('account.html', title='Account',
@@ -171,12 +184,13 @@ def account():
 def new_post():
     form = PostForm()
     if form.validate_on_submit():
-        post = {
-            'title' : form.title.data,
-            'content' : form.content.data,
-            'author' : current_user.username
-        }
-        mongo.db.posts.insert_one(post)
+        post = Post(
+            title=form.title.data,
+            content=form.content.data,
+            user_id=current_user.get_id(),
+        )
+        post_dict = post.to_dict()
+        mongo.db.posts.insert_one(post_dict)
         flash('Your post has been created!', 'success')
         return redirect(url_for('home'))
     return render_template('create_post.html', title='New Post',
@@ -195,7 +209,7 @@ def update_post(post_id):
     post = mongo.db.posts.find_one({'_id': post_id})
     if post is None:
         abort(404)
-    if post['author'] != current_user.username:
+    if post['author'] != current_user:
         abort(403)
     form = PostForm()
     if form.validate_on_submit():
@@ -240,11 +254,15 @@ def delete_post(post_id):
 @application.route("/user/<string:username>")
 def user_posts(username):
     page = request.args.get('page', 1, type=int)
-    user = User.query.filter_by(username=username).first_or_404()
-    posts = Post.query.filter_by(author=user)\
-        .order_by(Post.date_posted.desc())\
-        .paginate(page=page, per_page=5)
-    return render_template('user_posts.html', posts=posts, user=user)
+    user_data = mongo.db.users.find_one({'username': username})  # Retrieve user data from MongoDB
+    if not user_data:
+        abort(404)  # Raise a 404 error if user not found
+    user = User(username=user_data['username'], email=user_data['email'], password=user_data['password'])
+    # Retrieve posts from MongoDB using author field and order by date_posted in descending order
+    posts = mongo.db.posts.find({'author': user._username}).sort('date_posted', -1).skip((page - 1) * 5).limit(5)
+    # Count total number of posts for pagination
+    total_posts = mongo.db.posts.count_documents({'author': user._username})
+    return render_template('user_posts.html', posts=posts, user=user, total_posts=total_posts, page=page)
 
 
 def send_reset_email(user):
