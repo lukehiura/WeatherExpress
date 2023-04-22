@@ -1,27 +1,37 @@
 {% extends "layout.html" %}
 {% block content %}
-    {% for post in posts.items %}
-        <article class="media content-section text">
-          <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + post.author.image_file) }}">
-          <div class="media-body">
-            <div class="article-metadata">
-              <a class="mr-2" href="{{ url_for('user_posts', username=post.author.username) }}">{{ post.author.username }}</a>
-              <small class="text ">{{ post.date_posted.strftime('%Y-%m-%d') }}</small>
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+          {% if total_posts == 0 %}
+            <p>No posts found Error!</p>
+          {% else %}
+            {% for post in posts %}
+                <article class="media content-section text">
+                    <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + user_list[count]) }}">
+                    
+                    <div class="media-body">
+                        <div class="article-metadata">
+                            <a class="mr-2" href="{{ url_for('user_posts', username=post['username']) }}">{{ post['username'] }}</a>
+                            <small class="text">{{ post['date_posted'].strftime('%Y-%m-%d') }}</small>
+                        </div>
+                        <h2 class="article-title"><a href="{{ url_for('post', post_id=post['_id'])}}">{{ post['title'] }}</a></h2>
+                        <p class="article-content text">{{ post['content'] }}</p>
+                    </div>
+                </article>
+                {% set count = count + 1 %}
+            {% endfor %}
+          {% endif %}
+            <div class="pagination mt-4">
+                {% if page > 1 %}
+                    <a class="btn btn-outline-info mr-2" href="{{ url_for('blog', page=1) }}">First</a>
+                    <a class="btn btn-outline-info mr-2" href="{{ url_for('blog', page=page-1) }}">Previous</a>
+                {% endif %}
+                <span class="current-page">{{ page }}</span>
+                {% if page < total_pages %}
+                    <a class="btn btn-outline-info mr-2" href="{{ url_for('blog', page=page+1) }}">Next</a>
+                    <a class="btn btn-outline-info" href="{{ url_for('blog', page=total_pages) }}">Last</a>
+                {% endif %}
             </div>
-            <h2 id="posts"><a id="posts" class="article-title" href="{{ url_for('post', post_id=post.id) }}">{{ post.title }}</a></h2>
-            <p id="posts" class="article-content text">{{ post.content }}</p>
-          </div>
-        </article>
-    {% endfor %}
-    {% for page_num in posts.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
-      {% if page_num %}
-        {% if posts.page == page_num %}
-          <a class="btn btn-info mb-4" href="{{ url_for('blog', page=page_num) }}">{{ page_num }}</a>
-        {% else %}
-          <a class="btn btn-outline-info mb-4" href="{{ url_for('blog', page=page_num) }}">{{ page_num }}</a>
-        {% endif %}
-      {% else %}
-        ...
-      {% endif %}
-    {% endfor %}
+        </div>
+    </div>
 {% endblock content %}

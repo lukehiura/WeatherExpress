@@ -4,7 +4,8 @@ from wtforms import StringField, PasswordField, SubmitField, BooleanField, valid
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from weatherVue.models import User
 from flask_login import current_user
-
+from weatherVue import mongo
+from pymongo.errors import OperationFailure
 
 
 
@@ -19,16 +20,17 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField('Sign Up')
 
     def validate_username(self, username):
-        user = User.query.filter_by(username=username.data).first()
-        if user:
-            raise ValidationError('That username is taken. Please choose a different one.')
+        user = mongo.db.users.find_one({'username': username.data})
+        print(user)
+        if user is not None:
+            raise ValidationError('That username is taken. Please choose a different one')
 
     def validate_email(self, email):
-        user = User.query.filter_by(email=email.data).first()
-        if user:
+        user = mongo.db.users.find_one({'email': email.data})
+        print(user)
+        if user is not None:
             raise ValidationError('That email is taken. Please choose a different one.')
 
-        
 
 class LoginForm(FlaskForm):
     email = StringField('Email',
@@ -40,23 +42,23 @@ class LoginForm(FlaskForm):
 
 class UpdateAccountForm(FlaskForm):
     username = StringField('Username',
-                           validators=[DataRequired(), Length(min=2, max=20)])
+                           validators=[Length(min=2, max=20)])
     email = StringField('Email',
-                        validators=[DataRequired(), Email()])
+                        validators=[ Email()])
+    password = PasswordField('Password',
+                           validators=[DataRequired() ])
+    confirm_password = PasswordField('Confirm Password',
+                                     validators=[DataRequired(), EqualTo('password')])
     picture = FileField('Update Profile Picture', validators=[FileAllowed(['jpg', 'png'])])
     submit = SubmitField('Update')
 
     def validate_username(self, username):
-        if username.data != current_user.username:
-            user = User.query.filter_by(username=username.data).first()
-            if user:
-                raise ValidationError('That username is taken. Please choose a different one.')
+        if mongo.db.users.find_one({'username': username.data}):
+            raise ValidationError('That username is taken. Please choose a different one')
 
     def validate_email(self, email):
-        if email.data != current_user.email:
-            user = User.query.filter_by(email=email.data).first()
-            if user:
-                raise ValidationError('That email is taken. Please choose a different one.')
+        if mongo.db.users.find_one({'email': email.data}):
+            raise ValidationError('That email is taken. Please choose a different one.')
     
 class PostForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])
@@ -70,9 +72,13 @@ class RequestResetForm(FlaskForm):
     submit = SubmitField('Request Password Reset')
 
     def validate_email(self, email):
-        user = User.query.filter_by(email=email.data).first()
-        if user is None:
-            raise ValidationError('There is no account with that email. You must register first.')
+        try:
+            user = mongo.db.users.find_one({'email': email.data})
+        except OperationFailure as e:
+            raise ValidationError('Failed to query MongoDB: {}'.format(e))
+
+        if user:
+            raise ValidationError('That email is taken. Please choose a different one.')
 
 
 class ResetPasswordForm(FlaskForm):
