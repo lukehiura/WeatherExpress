@@ -1,18 +1,18 @@
 import os
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail
 from flask_pymongo import PyMongo
 
-
+secret_key = os.environ.get('SECRET_KEY')
+mongo_uri = os.environ.get('MONGO_URI')
 
 
 application = Flask(__name__)
-application.config['SECRET_KEY'] = '5791628bb0b13ce0c676dfde280ba245'
-application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'   
-application.config['MONGO_URI'] = 'mongodb+srv://lhiur001:0pemDaAuQTiqvR9L@profiles-db.jovxyhy.mongodb.net/profiles-db?retryWrites=true&w=majority'
+application.config['SECRET_KEY'] = secret_key
+application.config['MONGO_URI'] = mongo_uri
+
 mongo = PyMongo(application)
 try:
     # Fetch data from a MongoDB collection
@@ -31,7 +31,6 @@ application.config['MAIL_USE_TLS'] = True
 application.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER')
 application.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASS')
 mail = Mail(application)
-
 
 from weatherVue import routes
 
