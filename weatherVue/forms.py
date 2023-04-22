@@ -20,25 +20,17 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField('Sign Up')
 
     def validate_username(self, username):
-        try:
-            print(current_user.email)
-            user = mongo.db.users.find_one({'username': username.data})
-        except OperationFailure as e:
-            raise ValidationError('Failed to query MongoDB: {}'.format(e))
-
-        if user:
-            raise ValidationError('That username is taken. Please choose a different one.')
+        user = mongo.db.users.find_one({'username': username.data})
+        print(user)
+        if user is not None:
+            raise ValidationError('That username is taken. Please choose a different one')
 
     def validate_email(self, email):
-        try:
-            user = mongo.db.users.find_one({'email': email.data})
-        except OperationFailure as e:
-            raise ValidationError('Failed to query MongoDB: {}'.format(e))
-
-        if user:
+        user = mongo.db.users.find_one({'email': email.data})
+        print(user)
+        if user is not None:
             raise ValidationError('That email is taken. Please choose a different one.')
 
-        
 
 class LoginForm(FlaskForm):
     email = StringField('Email',
@@ -50,25 +42,23 @@ class LoginForm(FlaskForm):
 
 class UpdateAccountForm(FlaskForm):
     username = StringField('Username',
-                           validators=[DataRequired(), Length(min=2, max=20)])
+                           validators=[Length(min=2, max=20)])
     email = StringField('Email',
-                        validators=[DataRequired(), Email()])
+                        validators=[ Email()])
+    password = PasswordField('Password',
+                           validators=[DataRequired() ])
+    confirm_password = PasswordField('Confirm Password',
+                                     validators=[DataRequired(), EqualTo('password')])
     picture = FileField('Update Profile Picture', validators=[FileAllowed(['jpg', 'png'])])
     submit = SubmitField('Update')
 
     def validate_username(self, username):
-        
-        if username.data != current_user.username:
-            users = mongo.db.users.find({'username': username.data})
-            if users.count() > 0:
-                raise ValidationError('That username is taken. Please choose a different one.')
-        
+        if mongo.db.users.find_one({'username': username.data}):
+            raise ValidationError('That username is taken. Please choose a different one')
 
     def validate_email(self, email):
-        if email.data != current_user.email:
-            users = mongo.db.users.find({'email': email.data})
-            if users.count() > 0:
-                raise ValidationError('That email is taken. Please choose a different one.')
+        if mongo.db.users.find_one({'email': email.data}):
+            raise ValidationError('That email is taken. Please choose a different one.')
     
 class PostForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])

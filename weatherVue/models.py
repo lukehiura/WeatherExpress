@@ -1,35 +1,55 @@
 from datetime import datetime 
 from itsdangerous import URLSafeTimedSerializer as Serializer
 from weatherVue import mongo, login_manager, application
-from flask_login import UserMixin, current_user
+from flask_login import UserMixin, current_user, AnonymousUserMixin
 from bson.objectid import ObjectId
 from flask import session
-from mongoengine.fields import ReferenceField
-
 
 
 @login_manager.user_loader
 def load_user(user_id):
-    """Callback function to load a user from MongoDB based on user_id."""
-    # Assuming you have a MongoDB collection named "users"
-    # and the User class has a "_id" attribute as shown in the example above
-    print('userid input',user_id)
-    user_data = mongo.db.users.find_one({'_id': ObjectId(user_id)})
-    print('userdata', user_data)
-    print(session)
-    if user_data:
-        return User(
-            username=user_data['username'],
-            email=user_data['email'],
-            password=user_data['password'],
-            image_file=user_data['image_file'],
-            id=user_data['_id']
-        )
-    return None
+    if user_id is not None:
+        if user_id == 'None':  # Check for string 'None' as well
+            return AnonymousUser()  # Return custom anonymous user object
+        user_data = mongo.db.users.find_one({'_id': ObjectId(user_id)})
+        if user_data:
+            return User(
+                username=user_data['username'],
+                email=user_data['email'],
+                password=user_data['password'],
+                image_file=user_data['image_file'],
+                id=user_data['_id']
+            )
+    return AnonymousUser()  # Return custom anonymous user object
 
+
+class AnonymousUser(AnonymousUserMixin):
+    def __init__(self):
+        self.id = None  # Set id to None
+        self.username = 'Anonymous'  # Set default username to 'Anonymous'
+        self.email = 'Random'
+
+    @property
+    def is_authenticated(self):
+        return False
+
+    @property
+    def is_active(self):
+        return False
+
+    @property
+    def is_anonymous(self):
+        return True
+
+    def get_id(self):
+        return None
+    
+    def get_username(self):
+        return 
+    
 
 class User(UserMixin):
-    def __init__(self, username, email, password, id, image_file=None):
+    def __init__(self, username, email, password, id=None, image_file=None):
         self._username = username
         self._email = email
         self._id = id
@@ -89,7 +109,7 @@ class User(UserMixin):
     
     def get_reset_token(self, expires_sec=1800):
         s = Serializer(application.config['SECRET_KEY'], expires_sec)
-        return s.dumps({'user_id': self.id}).decode('utf-8')
+        return s.dumps({'user_id': str(self._id)}).decode('utf-8')
     
     @staticmethod
     def verify_reset_token(token):

@@ -12,6 +12,7 @@ from flask_mail import Message
 from PIL import Image
 from pymongo.errors import OperationFailure
 from math import ceil
+from bson import ObjectId
 
 
 posts = [
@@ -37,6 +38,21 @@ def home():
     api_key = os.environ.get('GOOGLE_API_KEY')
     return render_template('home.html', posts=posts, api_key=api_key)
 
+def get_user_image_file(user_id):
+    """Get Image file associated with user_id"""
+    user = mongo.db.users.find_one({'_id': ObjectId(user_id)})
+    if user:
+        print(user['image_file'])
+        return user['image_file']
+    return None
+
+def get_username(user_id):
+    user = mongo.db.users.find_one({'_id': ObjectId(user_id)})
+    if user:
+        print(user['username'])
+        return user['username']
+    return None
+
 
 @application.route("/blog")
 def blog():
@@ -46,13 +62,20 @@ def blog():
     total_posts = mongo.db.posts.count_documents({})
     # Calculate the skip value based on the current page and per_page value
     skip = (page - 1) * per_page
-    # Retrieve posts from MongoDB using the 'find' method with skip and limit
-    posts = mongo.db.posts.find().sort('date_posted', -1).skip(skip).limit(per_page)
-    num_posts = len(list(posts))
+    cursor = mongo.db.posts.find().sort('date_posted', -1).skip(skip).limit(per_page)
+    # Retrieve posts from MongoDB using the 'find' method with query operators
+    posts = list(cursor)
+    print(posts)
+    # Calculate total pages for pagination
     total_pages = ceil(total_posts / per_page)
-    print("array of posts", posts)
-
-    return render_template('blog.html', posts=posts, total_posts=total_posts, page=page, per_page=per_page, num_posts=num_posts, total_pages=total_pages)
+    user_list = []
+    for post in posts:
+        # Check if '_id' key is present and is of type ObjectId
+        if '_id' in post and isinstance(post['_id'], ObjectId):
+            # Convert ObjectId to string
+            post['_id'] = str(post['_id'])
+        user_list.append(get_user_image_file(post['user_id']))
+    return render_template('blog.html', posts=posts, total_posts=total_posts, page=page, per_page=per_page, num_posts=len(posts), total_pages=total_pages, user_list=user_list, count=0)
 
 
 @application.route("/about")
@@ -88,7 +111,7 @@ def login():
 
         if user_data and bcrypt.check_password_hash(user_data['password'], password):
             # Check if 'image_file' key is present in user_data
-            print("testinng userdata login", str(user_data['_id']))
+            
             if 'image_file' in user_data:
                 user = User(
                             username=user_data['username'], 
@@ -101,10 +124,9 @@ def login():
                             email=user_data['email'], 
                             password=user_data['password'], 
                             id=user_data['_id']) # Use default image_file
-            
-            print("before loginuser", session)
+           
             login_user(user, remember=form.remember.data)
-            print("after loginuser", session)
+         
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('home'))
         else:
@@ -173,8 +195,9 @@ def account():
         return redirect(url_for('account'))
     elif request.method == 'GET':
         form.username.data = current_user.get_username()
-        form.email.data = current_user.email
-    image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
+        form.email.data = current_user.get_email()
+    
+    image_file = url_for('static', filename='profile_pics/' + current_user.get_image_file())
     return render_template('account.html', title='Account',
                            image_file=image_file, form=form)
 
@@ -197,50 +220,57 @@ def new_post():
                            form=form, legend='New Post')
 
 
-@application.route("/post/<int:post_id>")
+@application.route("/post/<string:post_id>")
 def post(post_id):
-    post = Post.query.get_or_404(post_id)
-    return render_template('post.html', title=post.title, post=post)
+    # Query the 'posts' collection in MongoDB by '_id'
+    post = mongo.db.posts.find_one({"_id": ObjectId(post_id)})
+    image_file = get_user_image_file(post['user_id'])
+    username = get_username(post['user_id'])
+    str_post_id = str(post['_id'])
 
+    if post:
+        return render_template('post.html', title=post['title'], post=post, image_file=image_file, username=username, str_post_id=str_post_id )
+    else:
+        # Return a custom 404 error page if post not found
+        return render_template('404.html'), 404
 
-@application.route("/post/<int:post_id>/update", methods=['GET', 'POST'])
+@application.route("/post/<string:post_id>/update", methods=['GET', 'POST'])
 @login_required
 def update_post(post_id):
-    post = mongo.db.posts.find_one({'_id': post_id})
+    post = mongo.db.posts.find_one({'_id': ObjectId(post_id)})
     if post is None:
-        abort(404)
-    if post['author'] != current_user:
+        render_template('404.html'), 404
+    if get_username(post['user_id']) != current_user.get_username():
         abort(403)
     form = PostForm()
     if form.validate_on_submit():
-        mongo.db.posts.update_one({'_id': post_id},
+        mongo.db.posts.update_one({'_id': ObjectId(post_id)},
                                   {'$set': {'title': form.title.data, 'content': form.content.data}})
-        post.title = form.title.data
-        post.content = form.content.data
+        post['title'] = form.title.data
+        post['content'] = form.content.data
         flash('Your post has been updated!', 'success')
-        return redirect(url_for('post', post_id=post.id))
+        return redirect(url_for('post', post_id=post_id))
     elif request.method == 'GET':
-        form.title.data = post.title
-        form.content.data = post.content
+        form.title.data = post['title']
+        form.content.data = post['content']
     return render_template('create_post.html', title='Update Post',
                            form=form, legend='Update Post')
 
 
-@application.route("/post/<int:post_id>/delete", methods=['POST'])
+@application.route("/post/<string:post_id>/delete", methods=['POST'])
 @login_required
 def delete_post(post_id):
-    post = mongo.db.posts.find_one({'_id': post_id})
+    post = mongo.db.posts.find_one({'_id': ObjectId(post_id)})
     if not post:
         # If post is not found, raise a 404 error
-        abort(404)
-
+        render_template('404.html'), 404
     # Verify if the post author is the current user
-    if post['author'] != current_user:
+    if get_username(post['user_id']) != current_user.get_username():
         # If post author does not match current user, raise a 403 error
         abort(403)
     try:
         # Delete the post from MongoDB
-        mongo.db.posts.delete_one({'_id': post_id})
+        mongo.db.posts.delete_one({'_id': ObjectId(post_id)})
         flash('Your post has been deleted!', 'success')
         return redirect(url_for('home'))
     except OperationFailure as e:
@@ -254,22 +284,34 @@ def delete_post(post_id):
 @application.route("/user/<string:username>")
 def user_posts(username):
     page = request.args.get('page', 1, type=int)
+    per_page = 5
+    skip = (page - 1) * per_page
     user_data = mongo.db.users.find_one({'username': username})  # Retrieve user data from MongoDB
     if not user_data:
-        abort(404)  # Raise a 404 error if user not found
+        render_template('404.html'), 404  # Raise a 404 error if user not found
     user = User(username=user_data['username'], email=user_data['email'], password=user_data['password'])
     # Retrieve posts from MongoDB using author field and order by date_posted in descending order
-    posts = mongo.db.posts.find({'author': user._username}).sort('date_posted', -1).skip((page - 1) * 5).limit(5)
+    posts = mongo.db.posts.find({'author': user.get_username()}).sort('date_posted', -1).skip(skip).limit(per_page)
+    posts = list(posts)
+    print(posts)
+    total_pages = ceil(total_posts / per_page)
+    user_list = []
+    for post in posts:
+        if '_id' in post and isinstance(post['_id'], ObjectId):
+            # Convert ObjectId to string
+            post['_id'] = str(post['_id'])
+        user_list.append(get_user_image_file(post['user_id']))
     # Count total number of posts for pagination
-    total_posts = mongo.db.posts.count_documents({'author': user._username})
-    return render_template('user_posts.html', posts=posts, user=user, total_posts=total_posts, page=page)
+    total_posts = mongo.db.posts.count_documents({'author': user.get_username})
+    return render_template('user_posts.html', posts=posts, total_posts=total_posts, page=page, per_page=per_page, num_posts=len(posts), total_pages=total_pages, user_list=user_list, count=0)
+    
 
 
 def send_reset_email(user):
     token = user.get_reset_token()
     msg = Message('Password Reset Request',
-                  sender='noreply@demo.com',
-                  recipients=[user.email])
+                  sender='noreply@weatherVue.com',
+                  recipients=[user.get_email()])
     msg.body = f'''To reset your password, visit the following link:
 {url_for('reset_token', token=token, _external=True)}
 If you did not make this request then simply ignore this email and no changes will be made.
@@ -283,8 +325,17 @@ def reset_request():
         return redirect(url_for('home'))
     form = RequestResetForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        send_reset_email(user)
+        user_data = mongo.db.users.find_one({'email': form.email.data})
+        if user_data is None:
+            render_template('404.html'), 404
+        else:
+            user = User(
+                        username=user_data['username'], 
+                        email=user_data['email'],
+                        password=user_data['password'], 
+                        image_file=user_data['image_file'],
+                        id=user_data['_id'])
+            send_reset_email(user)
         flash('An email has been sent with instructions to reset your password.', 'info')
         return redirect(url_for('login'))
     return render_template('reset_request.html', title='Reset Password', form=form)
@@ -317,3 +368,9 @@ def reset_token(token):
             return redirect(url_for('login'))
         
     return render_template('reset_token.html', title='Reset Password', form=form)
+
+
+# Custom error handler for 404 errors
+@application.errorhandler(404)
+def not_found_error(error):
+    return render_template('404.html'), 404

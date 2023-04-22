@@ -2,23 +2,23 @@
 {% block content %}
     <div class="row">
         <div class="col-md-8 offset-md-2">
-          {% if not has_posts %}
-            <p>No posts found</p>
-          
+          {% if total_posts == 0 %}
+            <p>No posts found Error!</p>
           {% else %}
-            {% for post, key in posts.items() %}
-              
-              <article class="media content-section text">
-                  <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + post.get('image_file')) }}">
-                  <div class="media-body">
-                      <div class="article-metadata">
-                          <a class="mr-2" href="{{ url_for('user_posts', username=post.get('username')) }}">{{ post.get_username() }}</a>
-                          <small class="text">{{ post.date_posted.strftime('%Y-%m-%d') }}</small>
-                      </div>
-                      <h2 class="article-title"><a href="{{ url_for('post', post_id=post.id) }}">{{ post.title }}</a></h2>
-                      <p class="article-content text">{{ post.content }}</p>
-                  </div>
-              </article>
+            {% for post in posts %}
+                <article class="media content-section text">
+                    <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + user_list[count]) }}">
+                    
+                    <div class="media-body">
+                        <div class="article-metadata">
+                            <a class="mr-2" href="{{ url_for('user_posts', username=post['username']) }}">{{ post['username'] }}</a>
+                            <small class="text">{{ post['date_posted'].strftime('%Y-%m-%d') }}</small>
+                        </div>
+                        <h2 class="article-title"><a href="{{ url_for('post', post_id=post['_id'])}}">{{ post['title'] }}</a></h2>
+                        <p class="article-content text">{{ post['content'] }}</p>
+                    </div>
+                </article>
+                {% set count = count + 1 %}
             {% endfor %}
           {% endif %}
             <div class="pagination mt-4">
