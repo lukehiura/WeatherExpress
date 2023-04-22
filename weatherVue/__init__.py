@@ -10,7 +10,7 @@ mongo_uri = os.environ.get('MONGO_URI')
 
 
 application = Flask(__name__)
-application.config['SECRET_KEY'] = secret_key
+application.config['SECRET_KEY'] = '5791628bb0b13ce0c676dfde280ba245'
 application.config['MONGO_URI'] = mongo_uri
 
 mongo = PyMongo(application)
