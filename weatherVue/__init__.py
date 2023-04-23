@@ -11,7 +11,7 @@ mongo_uri = os.environ.get('MONGO_URI')
 
 application = Flask(__name__)
 application.config['SECRET_KEY'] = '5791628bb0b13ce0c676dfde280ba245'
-application.config['MONGO_URI'] = mongo_uri
+application.config['MONGO_URI'] = 'mongodb+srv://lhiur001:0pemDaAuQTiqvR9L@profiles-db.jovxyhy.mongodb.net/profiles-db?retryWrites=true&w=majority'
 
 mongo = PyMongo(application)
 try:
