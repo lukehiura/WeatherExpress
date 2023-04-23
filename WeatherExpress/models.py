@@ -1,6 +1,6 @@
 from datetime import datetime 
 from itsdangerous import URLSafeTimedSerializer as Serializer
-from weatherVue import mongo, login_manager, application
+from WeatherExpress import mongo, login_manager, application
 from flask_login import UserMixin, current_user, AnonymousUserMixin
 from bson.objectid import ObjectId
 from flask import session

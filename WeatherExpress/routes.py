@@ -3,10 +3,10 @@ import os
 import secrets
 from flask import request, jsonify, render_template, url_for, flash, redirect, abort, session
 from Get_Weather import get_response, get_weather_summary, get_temperatures, get_humidity
-from weatherVue.forms import (RegistrationForm, LoginForm, UpdateAccountForm,
+from WeatherExpress.forms import (RegistrationForm, LoginForm, UpdateAccountForm,
                                 PostForm, RequestResetForm, ResetPasswordForm)
-from weatherVue.models import User, Post
-from weatherVue import application, mongo, bcrypt, mail
+from WeatherExpress.models import User, Post
+from WeatherExpress import application, mongo, bcrypt, mail
 from flask_login import login_user, current_user, logout_user, login_required, LoginManager
 from flask_mail import Message
 from PIL import Image
@@ -310,7 +310,7 @@ def user_posts(username):
 def send_reset_email(user):
     token = user.get_reset_token()
     msg = Message('Password Reset Request',
-                  sender='noreply@weatherVue.com',
+                  sender='noreply@WeatherExpress.com',
                   recipients=[user.get_email()])
     msg.body = f'''To reset your password, visit the following link:
 {url_for('reset_token', token=token, _external=True)}

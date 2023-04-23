@@ -1,3 +1,3 @@
-from weatherVue import application
+from WeatherExpress import application
 if __name__ == '__main__':
-    application.run()
+    application.run(debug=True)

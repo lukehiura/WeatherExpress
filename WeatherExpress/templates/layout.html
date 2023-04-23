@@ -14,16 +14,16 @@
     <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTXLIXBddGSv8-_zrYkGygUSXFictihyXcN6o4ItgCglA&s">
 
     {% if title %}
-        <title>WeatherVue - {{ title }}</title>
+        <title>WeatherExpress - {{ title }}</title>
     {% else %}
-        <title>WeatherVue</title>
+        <title>WeatherExpress</title>
     {% endif %}
 </head>
 <body>
     <header class="site-header">
       <nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top">
         <div class="container">
-          <a class="navbar-brand mr-4" href="/">WeatherVue</a>
+          <a class="navbar-brand mr-4" href="/">WeatherExpress</a>
           <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
           </button>
@@ -32,7 +32,7 @@
               <a class="nav-item nav-link" href="{{ url_for('home') }}">Home</a>
               <a class="nav-item nav-link" href="{{ url_for('blog') }}">Blog</a>
               <a class="nav-item nav-link" href="{{ url_for('about') }}">About</a>
-              <a class="nav-item nav-link" href="{{ url_for('map') }}">Map</a>
+              <a class="nav-item nav-link" href="{{ url_for('map') }}">Chat Bot</a>
             </div>
             <!-- Navbar Right Side -->
             <div class="navbar-nav">

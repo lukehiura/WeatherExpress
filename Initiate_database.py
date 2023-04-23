@@ -2,7 +2,7 @@ from pymongo import MongoClient
 import datetime
 
 mongo = MongoClient('mongodb+srv://lhiur001:0pemDaAuQTiqvR9L@profiles-db.jovxyhy.mongodb.net/?retryWrites=true&w=majority')
-db = mongo.weatherVue
+db = mongo.WeatherExpress
 users = {
     'username':'luquifquif',
     'email': 'lhiur001@gmail.com',

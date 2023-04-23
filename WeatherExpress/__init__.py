@@ -32,7 +32,7 @@ application.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER')
 application.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASS')
 mail = Mail(application)
 
-from weatherVue import routes
+from WeatherExpress import routes
 
 
 
