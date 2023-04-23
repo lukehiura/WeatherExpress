@@ -31,3 +31,4 @@ Werkzeug==2.2.3
 WTForms==3.0.1
 yarg==0.1.9
 zope.interface==6.0
+pymongo[srv]
