@@ -5,11 +5,17 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-image: url(https://source.unsplash.com/random/vertical/?girls);
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center center;
 }
+
+#background-image-container {
+  /* Set initial background image */
+  background-image: url(https://source.unsplash.com/random/vertical/?city);
+  /* Add other CSS properties for the container as needed */
+}
+
 
 h5, h6 {
   color: #444444;

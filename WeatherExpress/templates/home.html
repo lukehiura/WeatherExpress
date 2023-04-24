@@ -43,18 +43,23 @@
             var cityInput = document.getElementById('cityInput').value;
             var unitSelect = document.getElementById('unitSelect').value;
 
+            // Construct the URL for the background image with the city query
+            var imageUrl = "https://source.unsplash.com/random/vertical/?" + cityInput;
+            // Update the background image of the container element
+            document.getElementById("background-image-container").style.backgroundImage = "url(" + imageUrl + ")";
+
             fetch('/get_weather?city=' + cityInput + '&unit=' + unitSelect)
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('weatherData').innerHTML = `
                         
                         <div class="card-body mt-3 md-8">
-                            <h4 class="text">Weather Summary</h5>
+                            <h4 class="text">Location Name</h5>
                             <p class="text">${data.weather_summary}</p>
                         </div>
                         
                         <div class="card-body mt-3 md-8">
-                            <h4 class="text">Weather Description</h4>
+                            <h4 class="text">Weather Summary</h4>
                             <p class="text">${data.weather_description}</p>
                         </div>
                    

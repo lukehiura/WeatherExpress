@@ -45,8 +45,7 @@ class UpdateAccountForm(FlaskForm):
                         validators=[ Email()])
     password = PasswordField('Password',
                            validators=[DataRequired() ])
-    confirm_password = PasswordField('Confirm Password',
-                                     validators=[DataRequired(), EqualTo('password')])
+
     picture = FileField('Update Profile Picture', validators=[FileAllowed(['jpg', 'png'])])
     submit = SubmitField('Update')
 
@@ -70,13 +69,9 @@ class RequestResetForm(FlaskForm):
     submit = SubmitField('Request Password Reset')
 
     def validate_email(self, email):
-        try:
-            user = mongo.db.users.find_one({'email': email.data})
-        except OperationFailure as e:
-            raise ValidationError('Failed to query MongoDB: {}'.format(e))
-
-        if user:
+        if mongo.db.users.find_one({'email': email.data}):
             raise ValidationError('That email is taken. Please choose a different one.')
+
 
 
 class ResetPasswordForm(FlaskForm):
