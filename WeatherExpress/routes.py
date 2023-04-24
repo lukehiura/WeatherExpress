@@ -221,6 +221,7 @@ def new_post():
 
 
 @application.route("/post/<string:post_id>")
+@login_required
 def post(post_id):
     # Query the 'posts' collection in MongoDB by '_id'
     post = mongo.db.posts.find_one({"_id": ObjectId(post_id)})
