@@ -13,6 +13,9 @@ from PIL import Image
 from pymongo.errors import OperationFailure
 from math import ceil
 from bson import ObjectId
+import sys
+sys.path.append('./protobuf')
+import gprc_client
 
 
 posts = [
@@ -135,28 +138,9 @@ def login():
 
 
 @application.route('/get_weather', methods=['GET'])
-def get_weather():
-    city = request.args.get('city')
-    unit = request.args.get('unit', 'C') # default unit is 'C'
-    response = get_response(city)
-    weather_summary = get_weather_summary(response, unit)
-    temperatures = get_temperatures(response, unit)
-    humidity = get_humidity(response)
-
-    return jsonify({
-        'weather_summary': weather_summary[1],
-        'weather_description': weather_summary[0],
-        'high_temp_pm': temperatures[0],
-        'high_temp_am': temperatures[1],
-        'high_temp_night': temperatures[2],
-        'low_temp_pm': temperatures[3],
-        'low_temp_am': temperatures[4],
-        'low_temp_night': temperatures[5],
-        'humidity_pm': humidity[0],
-        'humidity_am': humidity[1],
-        'humidity_night' : humidity[2]
-    })
-
+def weather():
+    return gprc_client.get_weather(request.args.get('city'), request.args.get('unit', 'C'))
+    
 @application.route('/map', methods=['GET'])
 def map():
     return render_template('map.html')
