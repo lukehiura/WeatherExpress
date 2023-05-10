@@ -15,7 +15,15 @@ from math import ceil
 from bson import ObjectId
 import sys
 sys.path.append('./protobuf')
-import gprc_client
+import grpc_client
+import openai
+import json
+from dotenv import load_dotenv
+
+
+
+load_dotenv()
+
 
 
 posts = [
@@ -139,11 +147,45 @@ def login():
 
 @application.route('/get_weather', methods=['GET'])
 def weather():
-    return gprc_client.get_weather(request.args.get('city'), request.args.get('unit', 'C'))
+    return grpc_client.get_weather(request.args.get('city'), request.args.get('unit', 'C'))
+
+@application.route('/weather_gpt', methods=['GET'])
+def weather_gpt():
+    return render_template('weather_gpt.html')
     
-@application.route('/map', methods=['GET'])
-def map():
-    return render_template('map.html')
+@application.route('/weather_chat', methods=['POST'])
+def weather_chat():
+    openai.api_key = os.environ.get('OPEN_API_KEY')
+    model_engine = 'text-davinci-002'
+    user_input = request.json['message']
+    weather_response = grpc_client.get_weather(user_input, 'C')
+    if not weather_response:
+        return {'message' : "Invalid message, retry again"} 
+
+    else:
+        weather_dict = json.loads(weather_response)
+        weather_summary = weather_dict["weather_summary"]
+        high_temp_pm = int(weather_dict['high_temp_pm'].replace('\u00b0C', ''))
+        low_temp_pm = int(weather_dict['low_temp_pm'].replace('\u00b0C', ''))
+        humidity_pm = int(weather_dict['humidity_pm'].replace(' %', ''))
+
+        prompt = f"Describe what the weather is like in {user_input}. "
+        prompt += f"It is {weather_summary} with a high of {high_temp_pm}°C and a low of {low_temp_pm}°C. "
+        prompt += f"The humidity is {humidity_pm}%."
+        prompt += "What type of clothing would you recommend for this weather? Should I bring an umbrella? Display the exact temperature and exact humidity and explain why in details"
+        prompt += f"Also talk about what are some fun things to do around the {user_input}. Describe in details "
+        
+        response = openai.Completion.create(
+            engine=model_engine,
+            prompt=prompt,
+            max_tokens=1024,
+            n=1,
+            stop=None,
+            temperature=0.001
+        )
+        bot_response = response.choices[0].text
+
+    return {'message' : bot_response }
 
 @application.route("/logout")
 def logout():

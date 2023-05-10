@@ -4,8 +4,8 @@
     <div class="container">
         <form id="weatherForm" class="searchcontainer">
             <h2>WeatherExpress</h2>
-            <input type="text" id="cityInput" class="form-control mb-2 mr-sm-2" placeholder="Enter City Name">
-            <select id="unitSelect" class="form-control mb-2 mr-sm-2" placeholder="Units">
+            <input type="text" id="cityInput" class="form-control mb-2 mr-sm-2" placeholder="Enter City Name" required>
+            <select id="unitSelect" class="form-control mb-2 mr-sm-2" placeholder="Units" required>
                 <option value="" selected disabled>Select Units</option>
                 <option value="C">Celsius</option>
                 <option value="F">Fahrenheit</option>
@@ -46,7 +46,8 @@
             // Construct the URL for the background image with the city query
             var imageUrl = "https://source.unsplash.com/random/vertical/?" + cityInput;
             // Update the background image of the container element
-            document.getElementById("background-image-container").style.backgroundImage = "url(" + imageUrl + ")";
+            document.getElementById("background-image-container").style.backgroundImage = "url(" + imageUrl + ") !important";
+
 
             fetch('/get_weather?city=' + cityInput + '&unit=' + unitSelect)
                 .then(response => response.json())

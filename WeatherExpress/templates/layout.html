@@ -9,11 +9,17 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-c1TGTgLWJGvD+64e3hbE2P8xMxHMuGLOZsG1RJg9mYcY3Btuyvt8WJiLaPY+EYYzmI0sblsXO8WnvzjvOtMwGw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- Fontawesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-nosJ/1x/2ic6wswU6+YZU6UGBXd4bHmzpzRjgwwk0fSY/jCGR52SxwslIL+q3SZFZnH4ZJ4hI+RRTZv9dxTwg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
 
     <!-- Google API  -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAaccF2c64kfnoJFy8G4RmhYGI7ohOKrE4&callback=initMap"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTXLIXBddGSv8-_zrYkGygUSXFictihyXcN6o4ItgCglA&s">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
 
     <!-- Googel Analytics Monitoring -->
     <!-- Google tag (gtag.js) -->
@@ -46,7 +52,7 @@
               <a class="nav-item nav-link" href="{{ url_for('home') }}">Home</a>
               <a class="nav-item nav-link" href="{{ url_for('blog') }}">Blog</a>
               <a class="nav-item nav-link" href="{{ url_for('about') }}">About</a>
-              <a class="nav-item nav-link" href="{{ url_for('map') }}">Chat Bot</a>
+              <a class="nav-item nav-link" href="{{ url_for('weather_gpt') }}">WeatherGPT</a>
             </div>
             <!-- Navbar Right Side -->
             <div class="navbar-nav">

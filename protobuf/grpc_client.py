@@ -13,6 +13,9 @@ def get_weather(city, unit):
     # Create a request object with the cityname and unit
     request = weather_pb2.WeatherRequest(city=city, unit=unit)
 
+    if request is None:
+        return None
+
     # Call the getWeather method on the weather service stub, passing in the request object
     response = stub.GetWeather(request)
 
@@ -30,4 +33,5 @@ def get_weather(city, unit):
         'humidity_am': response.humidity_am,
         'humidity_night': response.humidity_night
     }
+    print(json_response)
     return json.dumps(json_response)
