@@ -13,6 +13,20 @@ from PIL import Image
 from pymongo.errors import OperationFailure
 from math import ceil
 from bson import ObjectId
+import sys
+sys.path.append('./protobuf')
+from protobuf import grpc_client, weather_pb2_grpc, weather_pb2
+import openai
+import json
+import client
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'protobuf')))
+
+# Load environment variables from .env file if it exists
+if os.path.exists('.env'):
+    from dotenv import load_dotenv
+    load_dotenv()
+    print("stupid")
 
 
 posts = [
@@ -36,20 +50,19 @@ posts = [
 @application.route("/home")
 def home():
     api_key = os.environ.get('GOOGLE_API_KEY')
+    print(api_key)
     return render_template('home.html', posts=posts, api_key=api_key)
 
 def get_user_image_file(user_id):
     """Get Image file associated with user_id"""
     user = mongo.db.users.find_one({'_id': ObjectId(user_id)})
     if user:
-        print(user['image_file'])
         return user['image_file']
     return None
 
 def get_username(user_id):
     user = mongo.db.users.find_one({'_id': ObjectId(user_id)})
     if user:
-        print(user['username'])
         return user['username']
     return None
 
@@ -65,7 +78,6 @@ def blog():
     cursor = mongo.db.posts.find().sort('date_posted', -1).skip(skip).limit(per_page)
     # Retrieve posts from MongoDB using the 'find' method with query operators
     posts = list(cursor)
-    print(posts)
     # Calculate total pages for pagination
     total_pages = ceil(total_posts / per_page)
     user_list = []
@@ -135,31 +147,46 @@ def login():
 
 
 @application.route('/get_weather', methods=['GET'])
-def get_weather():
-    city = request.args.get('city')
-    unit = request.args.get('unit', 'C') # default unit is 'C'
-    response = get_response(city)
-    weather_summary = get_weather_summary(response, unit)
-    temperatures = get_temperatures(response, unit)
-    humidity = get_humidity(response)
+def weather():
+    return client.get_weather(request.args.get('city'), request.args.get('unit', 'C'))
 
-    return jsonify({
-        'weather_summary': weather_summary[1],
-        'weather_description': weather_summary[0],
-        'high_temp_pm': temperatures[0],
-        'high_temp_am': temperatures[1],
-        'high_temp_night': temperatures[2],
-        'low_temp_pm': temperatures[3],
-        'low_temp_am': temperatures[4],
-        'low_temp_night': temperatures[5],
-        'humidity_pm': humidity[0],
-        'humidity_am': humidity[1],
-        'humidity_night' : humidity[2]
-    })
+@application.route('/weather_gpt', methods=['GET'])
+def weather_gpt():
+    return render_template('weather_gpt.html')
+    
+@application.route('/weather_chat', methods=['POST'])
+def weather_chat():
+    openai.api_key = os.environ.get('OPEN_API_KEY')
+    model_engine = 'text-davinci-002'
+    user_input = request.json['message']
+    weather_response = client.get_weather(user_input, 'C')
+    if not weather_response:
+        return {'message' : "Invalid message, retry again"} 
 
-@application.route('/map', methods=['GET'])
-def map():
-    return render_template('map.html')
+    else:
+        weather_dict = json.loads(weather_response)
+        weather_summary = weather_dict["weather_summary"]
+        high_temp_pm = int(weather_dict['high_temp_pm'].replace('\u00b0C', ''))
+        low_temp_pm = int(weather_dict['low_temp_pm'].replace('\u00b0C', ''))
+        humidity_pm = int(weather_dict['humidity_pm'].replace(' %', ''))
+
+        prompt = f"Describe what the weather is like in {user_input}. "
+        prompt += f"It is {weather_summary} with a high of {high_temp_pm}°C and a low of {low_temp_pm}°C. "
+        prompt += f"The humidity is {humidity_pm}%."
+        prompt += "What type of clothing would you recommend for this weather? Should I bring an umbrella? Display the exact temperature and exact humidity and explain why in details"
+        prompt += f"Also talk about what are some fun things to do around the {user_input}. Describe in details "
+        
+        response = openai.Completion.create(
+            engine=model_engine,
+            prompt=prompt,
+            max_tokens=1024,
+            n=1,
+            stop=None,
+            temperature=0.001
+        )
+        bot_response = response.choices[0].text
+
+    return {'message' : bot_response }
 
 @application.route("/logout")
 def logout():
@@ -294,7 +321,6 @@ def user_posts(username):
     # Retrieve posts from MongoDB using author field and order by date_posted in descending order
     posts = mongo.db.posts.find({'author': user.get_username()}).sort('date_posted', -1).skip(skip).limit(per_page)
     posts = list(posts)
-    print(posts)
     total_pages = ceil(total_posts / per_page)
     user_list = []
     for post in posts:

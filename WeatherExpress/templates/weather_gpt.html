@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% block content %}
+
+    
+    
+    <div id="chatbox">
+        <div id="chatbox-header">
+            <h1>Weather Chatbot</h1>
+            <p>A chatbot that provides weather information based on city names entered by the user.</p>
+        </div>
+        <div id="chatlog"></div>
+        <div id="input-container">
+            <input type="text" name="city" placeholder="Enter city name..." id="userInput" onkeydown="if (event.keyCode == 13) sendMessage()" />
+            <button id="sendButton" onclick="sendMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+            <div id="loading-icon-container" style="display: none;">
+                <i class="fas fa-spinner fa-spin"></i>
+            </div>
+        </div>
+    </div>
+    <script>
+        async function sendMessage() {
+            const userInput = $("#userInput").val();
+            if (userInput.trim() === "") {
+                return;
+            }
+            const chatlog = $("#chatlog");
+            chatlog.append(`<p class="user"><strong>You:</strong> ${userInput}</p>`);
+            chatlog.scrollTop(chatlog[0].scrollHeight);
+            
+            $("#sendButton").hide();
+            $("#loading-icon-container").show();
+
+            const response = await fetch("/weather_chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+
+                },
+                body: JSON.stringify({
+                    message: userInput
+                })
+            });
+            
+            $("#loading-icon-container").hide();
+            $("#sendButton").show();
+            
+            const result = await response.json();
+            const botReply = result.message;
+
+            chatlog.append(`<p class="bot"><strong>WeatherGPT:</strong> ${botReply}</p>`);
+            chatlog.scrollTop(chatlog[0].scrollHeight);
+
+            $("#userInput").val("");
+        }
+    </script>
+        
+
+{% endblock content %}

@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package weather;
+
+service WeatherService {
+  // Get weather information for a given city and unit
+  rpc GetWeather (WeatherRequest) returns (WeatherResponse);
+}
+
+message WeatherRequest {
+  string city = 1;
+  string unit = 2;
+}
+
+message WeatherResponse {
+  string weather_summary = 1;
+  string weather_description = 2;
+  float high_temp_pm = 3;
+  float high_temp_am = 4;
+  float high_temp_night = 5;
+  float low_temp_pm = 6;
+  float low_temp_am = 7;
+  float low_temp_night = 8;
+  float humidity_pm = 9;
+  float humidity_am = 10;
+  float humidity_night = 11;
+}

@@ -1,25 +1,25 @@
 # For more information, please refer to https://aka.ms/vscode-docker-python
 FROM python:3.10-slim
 
-EXPOSE 5002
 
-# Keeps Python from generating .pyc files in the container
-ENV PYTHONDONTWRITEBYTECODE=1
+# Copy the current directory contents into the container at /app
 
-# Turns off buffering for easier container logging
-ENV PYTHONUNBUFFERED=1
-
-# Install pip requirements
 COPY requirements.txt .
-RUN python -m pip install -r requirements.txt
+COPY . .
+COPY WeatherExpress .
+# Install the dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-WORKDIR /app
-COPY . /app
+# Expose the port that the app runs on
 
-# Creates a non-root user with an explicit UID and adds permission to access the /app folder
-# For more info, please refer to https://aka.ms/vscode-docker-python-configure-containers
-RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
-USER appuser
+# Set the environment variables
 
-# During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
-CMD ["gunicorn", "--bind", "0.0.0.0:5002", "application:app"]
+ENV GOOGLE_API_KEY="AIzaSyAaccF2c64kfnoJFy8G4RmhYGI7ohOKrE4"
+ENV SECRET_KEY='5791628bb0b13ce0c676dfde280ba245'
+ENV SQLALCHEMY_DATABASE_URI=sqlite:///site.db
+ENV MONGO_URI='mongodb+srv://lhiur001:0pemDaAuQTiqvR9L@profiles-db.jovxyhy.mondockergodb.net/profiles-db?retryWrites=true&w=majority'
+
+EXPOSE 5000
+
+# Set the command to run when the container starts
+CMD ["python", "application.py", "--port=5000"]

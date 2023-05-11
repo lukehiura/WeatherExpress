@@ -19,13 +19,11 @@ class RegistrationForm(FlaskForm):
 
     def validate_username(self, username):
         user = mongo.db.users.find_one({'username': username.data})
-        print(user)
         if user is not None:
             raise ValidationError('That username is taken. Please choose a different one')
 
     def validate_email(self, email):
         user = mongo.db.users.find_one({'email': email.data})
-        print(user)
         if user is not None:
             raise ValidationError('That email is taken. Please choose a different one.')
 
