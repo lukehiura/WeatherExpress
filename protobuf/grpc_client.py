@@ -1,9 +1,17 @@
+from flask import Flask, request, jsonify
+from protobuf import weather_pb2
+from protobuf import weather_pb2_grpc
 import grpc
-import weather_pb2
-import weather_pb2_grpc
 import json
 
-def get_weather(city, unit):
+app = Flask(__name__)
+
+@app.route('/weather', methods=['POST'])
+def get_weather():
+    data = request.get_json()
+    city = data.get('city')
+    unit = data.get('unit', 'C')
+
     # Create a gRPC channel to connect to the weather microservice
     channel = grpc.insecure_channel('localhost:50051')
 
@@ -14,7 +22,7 @@ def get_weather(city, unit):
     request = weather_pb2.WeatherRequest(city=city, unit=unit)
 
     if request is None:
-        return None
+        return jsonify({'error': 'Bad Request'})
 
     # Call the getWeather method on the weather service stub, passing in the request object
     response = stub.GetWeather(request)
@@ -22,7 +30,7 @@ def get_weather(city, unit):
     # Convert the response to a JSON object
     json_response = {
         'weather_summary': response.weather_summary,
-        'weather_description':response.weather_description, 
+        'weather_description': response.weather_description,
         'high_temp_pm': response.high_temp_pm,
         'high_temp_am': response.high_temp_am,
         'high_temp_night': response.high_temp_night,
@@ -33,5 +41,7 @@ def get_weather(city, unit):
         'humidity_am': response.humidity_am,
         'humidity_night': response.humidity_night
     }
-    print(json_response)
-    return json.dumps(json_response)
+    return jsonify(json_response)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080)

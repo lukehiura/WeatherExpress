@@ -15,15 +15,18 @@ from math import ceil
 from bson import ObjectId
 import sys
 sys.path.append('./protobuf')
-import grpc_client
+from protobuf import grpc_client, weather_pb2_grpc, weather_pb2
 import openai
 import json
-from dotenv import load_dotenv
+import client
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'protobuf')))
 
-
-load_dotenv()
-
+# Load environment variables from .env file if it exists
+if os.path.exists('.env'):
+    from dotenv import load_dotenv
+    load_dotenv()
+    print("stupid")
 
 
 posts = [
@@ -47,20 +50,19 @@ posts = [
 @application.route("/home")
 def home():
     api_key = os.environ.get('GOOGLE_API_KEY')
+    print(api_key)
     return render_template('home.html', posts=posts, api_key=api_key)
 
 def get_user_image_file(user_id):
     """Get Image file associated with user_id"""
     user = mongo.db.users.find_one({'_id': ObjectId(user_id)})
     if user:
-        print(user['image_file'])
         return user['image_file']
     return None
 
 def get_username(user_id):
     user = mongo.db.users.find_one({'_id': ObjectId(user_id)})
     if user:
-        print(user['username'])
         return user['username']
     return None
 
@@ -76,7 +78,6 @@ def blog():
     cursor = mongo.db.posts.find().sort('date_posted', -1).skip(skip).limit(per_page)
     # Retrieve posts from MongoDB using the 'find' method with query operators
     posts = list(cursor)
-    print(posts)
     # Calculate total pages for pagination
     total_pages = ceil(total_posts / per_page)
     user_list = []
@@ -147,7 +148,7 @@ def login():
 
 @application.route('/get_weather', methods=['GET'])
 def weather():
-    return grpc_client.get_weather(request.args.get('city'), request.args.get('unit', 'C'))
+    return client.get_weather(request.args.get('city'), request.args.get('unit', 'C'))
 
 @application.route('/weather_gpt', methods=['GET'])
 def weather_gpt():
@@ -158,7 +159,7 @@ def weather_chat():
     openai.api_key = os.environ.get('OPEN_API_KEY')
     model_engine = 'text-davinci-002'
     user_input = request.json['message']
-    weather_response = grpc_client.get_weather(user_input, 'C')
+    weather_response = client.get_weather(user_input, 'C')
     if not weather_response:
         return {'message' : "Invalid message, retry again"} 
 
@@ -320,7 +321,6 @@ def user_posts(username):
     # Retrieve posts from MongoDB using author field and order by date_posted in descending order
     posts = mongo.db.posts.find({'author': user.get_username()}).sort('date_posted', -1).skip(skip).limit(per_page)
     posts = list(posts)
-    print(posts)
     total_pages = ceil(total_posts / per_page)
     user_list = []
     for post in posts:

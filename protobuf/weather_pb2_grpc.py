@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import weather_pb2 as weather__pb2
+from protobuf import weather_pb2 as weather__pb2
 
 
 class WeatherServiceStub(object):
@@ -25,7 +25,8 @@ class WeatherServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def GetWeather(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Get weather information for a given city and unit
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')

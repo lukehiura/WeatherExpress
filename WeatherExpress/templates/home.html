@@ -55,7 +55,7 @@
                     document.getElementById('weatherData').innerHTML = `
                         
                         <div class="card-body mt-3 md-8">
-                            <h4 class="text">Location Name</h5>
+                            <h4 class="text">Location Name</h>
                             <p class="text">${data.weather_summary}</p>
                         </div>
                         
@@ -151,17 +151,15 @@
                 .catch(error => console.error(error));
         });
     </script>
-    <div id="map" class="md-12 mt-3" style="height: 500px; width: 100%;"></div>"
-    <div id="image-container"></div>
+    <div id="map" class="md-12 mt-3" style="height: 500px; width: 100%;"></div>
     <script src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&callback=initMap" async defer></script>
     <script>
         var map;
+        console.log("Testing before nit"+ "{{ api_key }}")
         function initMap() {
-          // Replace 'cityName' with your city name
             document.getElementById('weatherForm').addEventListener('submit', function(event) {
                 event.preventDefault(); // Prevent form submission
                 var cityName = document.getElementById('cityInput').value;
-                // Make a request to the Google Maps Geocoding API to get latitude and longitude
                 var geocoder = new google.maps.Geocoder();
                 geocoder.geocode({'address': cityName}, function(results, status) {
                     if (status === google.maps.GeocoderStatus.OK) {

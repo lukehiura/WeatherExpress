@@ -8,7 +8,6 @@
             {% for post in posts %}
                 <article class="media content-section text">
                     <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + user_list[count]) }}">
-                    
                     <div class="media-body">
                         <div class="article-metadata">
                             <a class="mr-2" href="{{ url_for('user_posts', username=post['username']) }}">{{ post['username'] }}</a>

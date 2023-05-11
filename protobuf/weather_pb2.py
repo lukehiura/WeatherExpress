@@ -10,7 +10,10 @@ from google.protobuf import symbol_database as _symbol_database
 
 _sym_db = _symbol_database.Default()
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rweather.proto\x12\x07weather\",\n\x0eWeatherRequest\x12\x0c\n\x04\x63ity\x18\x01 \x01(\t\x12\x0c\n\x04unit\x18\x02 \x01(\t\"\x90\x02\n\x0fWeatherResponse\x12\x17\n\x0fweather_summary\x18\x01 \x01(\t\x12\x1b\n\x13weather_description\x18\x02 \x01(\t\x12\x14\n\x0chigh_temp_pm\x18\x03 \x01(\t\x12\x14\n\x0chigh_temp_am\x18\x04 \x01(\t\x12\x17\n\x0fhigh_temp_night\x18\x05 \x01(\t\x12\x13\n\x0blow_temp_pm\x18\x06 \x01(\t\x12\x13\n\x0blow_temp_am\x18\x07 \x01(\t\x12\x16\n\x0elow_temp_night\x18\x08 \x01(\t\x12\x13\n\x0bhumidity_pm\x18\t \x01(\t\x12\x13\n\x0bhumidity_am\x18\n \x01(\t\x12\x16\n\x0ehumidity_night\x18\x0b \x01(\t2S\n\x0eWeatherService\x12\x41\n\nGetWeather\x12\x17.weather.WeatherRequest\x1a\x18.weather.WeatherResponse\"\x00\x62\x06proto3')
+
+
+
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rweather.proto\x12\x07weather\",\n\x0eWeatherRequest\x12\x0c\n\x04\x63ity\x18\x01 \x01(\t\x12\x0c\n\x04unit\x18\x02 \x01(\t\"\x90\x02\n\x0fWeatherResponse\x12\x17\n\x0fweather_summary\x18\x01 \x01(\t\x12\x1b\n\x13weather_description\x18\x02 \x01(\t\x12\x14\n\x0chigh_temp_pm\x18\x03 \x01(\x02\x12\x14\n\x0chigh_temp_am\x18\x04 \x01(\x02\x12\x17\n\x0fhigh_temp_night\x18\x05 \x01(\x02\x12\x13\n\x0blow_temp_pm\x18\x06 \x01(\x02\x12\x13\n\x0blow_temp_am\x18\x07 \x01(\x02\x12\x16\n\x0elow_temp_night\x18\x08 \x01(\x02\x12\x13\n\x0bhumidity_pm\x18\t \x01(\x02\x12\x13\n\x0bhumidity_am\x18\n \x01(\x02\x12\x16\n\x0ehumidity_night\x18\x0b \x01(\x02\x32Q\n\x0eWeatherService\x12?\n\nGetWeather\x12\x17.weather.WeatherRequest\x1a\x18.weather.WeatherResponseb\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'weather_pb2', globals())
@@ -22,5 +25,5 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _WEATHERRESPONSE._serialized_start=73
   _WEATHERRESPONSE._serialized_end=345
   _WEATHERSERVICE._serialized_start=347
-  _WEATHERSERVICE._serialized_end=430
+  _WEATHERSERVICE._serialized_end=428
 # @@protoc_insertion_point(module_scope)
