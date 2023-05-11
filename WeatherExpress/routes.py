@@ -26,7 +26,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'p
 if os.path.exists('.env'):
     from dotenv import load_dotenv
     load_dotenv()
-    print("stupid")
+    print("Whoever's looking at this is stupid haha")
 
 
 posts = [

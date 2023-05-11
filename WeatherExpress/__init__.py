@@ -1,23 +1,21 @@
 import os
 from flask import Flask
 from flask_login import LoginManager
+from flask_pymongo import PyMongo
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail
 from flask_pymongo import PyMongo
+import certifi
 
 secret_key = os.environ.get('SECRET_KEY')
 mongo_uri = os.environ.get('MONGO_URI')
-
-# Load environment variables from .env file if it exists
-
-from dotenv import load_dotenv
-load_dotenv(override=True)
 
 application = Flask(__name__)
 application.config['SECRET_KEY'] = '5791628bb0b13ce0c676dfde280ba245'
 application.config['MONGO_URI'] = 'mongodb+srv://lhiur001:0pemDaAuQTiqvR9L@profiles-db.jovxyhy.mongodb.net/profiles-db?retryWrites=true&w=majority'
 
-mongo = PyMongo(application)
+mongo = PyMongo(application, tlsCAFile=certifi.where())
+
 try:
     # Fetch data from a MongoDB collection
     data = mongo.db.collection_name.find_one()
