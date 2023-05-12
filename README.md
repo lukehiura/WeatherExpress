@@ -27,3 +27,6 @@ Welcome to the Weather Blog App! This is a web application that allows users to 
 1. Weather Information: Users can enter a location in the app's UI, and the app scrapes weather data from a weather website using web scraping techniques. The scraped data is processed and displayed in the app's UI, providing the user with up-to-date weather information.
 
 2. Blogging Functionality: Users can create, read, update, and delete blog posts in the app's UI. Blog posts, along with their associated data, such as author, date, and image URL, which are stored in a MongoDB database.
+
+
+3. New changes
