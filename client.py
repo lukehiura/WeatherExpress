@@ -12,7 +12,9 @@ def get_weather(city, unit):
     if response.status_code == 200:
         # Parse the JSON response
         json_response = response.json()
-        return jsonify(json_response)
+        return (response.text, response.status_code, response.headers.items())
     else:
-        # Return an error response
-        return jsonify({'error': 'Bad Request'})
+    # Return an error response
+        error_response = {'error': 'Bad Request'}
+        return (jsonify(error_response), 400, {'Content-Type': 'application/json'})
+

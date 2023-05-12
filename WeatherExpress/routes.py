@@ -160,33 +160,44 @@ def weather_chat():
     model_engine = 'text-davinci-002'
     user_input = request.json['message']
     weather_response = client.get_weather(user_input, 'C')
-    if not weather_response:
-        return {'message' : "Invalid message, retry again"} 
+    
+    if isinstance(weather_response, tuple) and weather_response[1] != 200:
+        return {'message': "Invalid message, retry again"}
+    weather_dict = json.loads(weather_response[0])
 
-    else:
-        weather_dict = json.loads(weather_response)
-        weather_summary = weather_dict["weather_summary"]
-        high_temp_pm = int(weather_dict['high_temp_pm'].replace('\u00b0C', ''))
-        low_temp_pm = int(weather_dict['low_temp_pm'].replace('\u00b0C', ''))
-        humidity_pm = int(weather_dict['humidity_pm'].replace(' %', ''))
+    high_temp_am = weather_dict['high_temp_am']
+    high_temp_night = weather_dict['high_temp_night']
+    high_temp_pm = weather_dict['high_temp_pm']
+    humidity_am = weather_dict['humidity_am']
+    humidity_night = weather_dict['humidity_night']
+    humidity_pm = weather_dict['humidity_pm']
+    low_temp_am = weather_dict['low_temp_am']
+    low_temp_night = weather_dict['low_temp_night']
+    low_temp_pm = weather_dict['low_temp_pm']
+    weather_description = weather_dict['weather_description']
+    weather_summary = weather_dict['weather_summary']
 
-        prompt = f"Describe what the weather is like in {user_input}. "
-        prompt += f"It is {weather_summary} with a high of {high_temp_pm}°C and a low of {low_temp_pm}°C. "
-        prompt += f"The humidity is {humidity_pm}%."
-        prompt += "What type of clothing would you recommend for this weather? Should I bring an umbrella? Display the exact temperature and exact humidity and explain why in details"
-        prompt += f"Also talk about what are some fun things to do around the {user_input}. Describe in details "
-        
-        response = openai.Completion.create(
-            engine=model_engine,
-            prompt=prompt,
-            max_tokens=1024,
-            n=1,
-            stop=None,
-            temperature=0.001
-        )
-        bot_response = response.choices[0].text
 
-    return {'message' : bot_response }
+    prompt = f"Describe what the weather is like in {user_input}. "
+    prompt += f"It is {weather_summary} with a high of {high_temp_pm}°C in the afternoon, {high_temp_am}°C in the morning, and {high_temp_night}°C at night. "
+    prompt += f"The low temperature ranges from {low_temp_am}°C in the morning, {low_temp_pm}°C in the afternoon, to {low_temp_night}°C at night. "
+    prompt += f"The humidity is {humidity_pm}% in the afternoon, {humidity_am}% in the morning, and {humidity_night}% at night. "
+    prompt += f"{weather_description}"
+    prompt += "What type of clothing would you recommend for this weather? Should I bring an umbrella? Please provide detailed information about the exact temperature and humidity."
+    prompt += f"Also, could you suggest some fun things to do around {user_input}? Please describe in detail."
+
+
+    response = openai.Completion.create(
+        engine=model_engine,
+        prompt=prompt,
+        max_tokens=1000,
+        n=1,
+        stop=None,
+        temperature=0.7
+    )
+    bot_response = response.choices[0].text
+
+    return {'message': bot_response}
 
 @application.route("/logout")
 def logout():
