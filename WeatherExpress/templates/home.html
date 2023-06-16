@@ -49,9 +49,15 @@
             document.getElementById("background-image-container").style.backgroundImage = "url(" + imageUrl + ") !important";
 
 
-            fetch('/get_weather?city=' + cityInput + '&unit=' + unitSelect)
-                .then(response => response.json())
-                .then(data => {
+                fetch('/get_weather', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ city: cityInput, unit: unitSelect })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
                     document.getElementById('weatherData').innerHTML = `
                         
                         <div class="card-body mt-3 md-8">

@@ -115,10 +115,22 @@ def get_wind_speed(response):
         return None
 
 def get_response(rawLocation):
+    if rawLocation is None:
+        raise ValueError("Invalid location: Location is not provided.")
+
     location = rawLocation.strip().replace(" ", "-")
+    if not location:
+        raise ValueError("Invalid location: Location is empty.")
+
     SCRAPE_URL = BASE_URL + location + "/forecasts/latest"
-    response = requests.get(SCRAPE_URL)
+    try:
+        response = requests.get(SCRAPE_URL)
+        response.raise_for_status()  # Check for HTTP errors
+    except requests.RequestException as e:
+        raise RuntimeError(f"Error retrieving weather data: {e}")
+
     return response
+
 
 def average(numbers):
     """
@@ -142,6 +154,9 @@ def celsius_to_kelvin(celsius):
     celsius = float(celsius)
     kelvin = celsius + 273.15
     return kelvin
+
+
+
 
 if __name__ == '__main__':
     cityname = input('Enter city name: ')

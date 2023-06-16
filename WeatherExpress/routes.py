@@ -13,12 +13,17 @@ from PIL import Image
 from pymongo.errors import OperationFailure
 from math import ceil
 from bson import ObjectId
+import llmchat
 import sys
 sys.path.append('./protobuf')
-from protobuf import grpc_client, weather_pb2_grpc, weather_pb2
 import openai
 import json
 import client
+import spacy
+
+
+# Uncomment for protbuf
+# from protobuf import grpc_client, weather_pb2_grpc, weather_pb2
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'protobuf')))
 
@@ -28,30 +33,12 @@ if os.path.exists('.env'):
     load_dotenv()
     print("Whoever's looking at this is stupid haha")
 
-
-posts = [
-    {
-        'author': 'Corey Schafer',
-        'title': 'Blog Post 1',
-        'content': 'First post content',
-        'date_posted': 'April 20, 2018'
-    },
-    {
-        'author': 'Jane Doe',
-        'title': 'Blog Post 2',
-        'content': 'Second post content',
-        'date_posted': 'April 21, 2018'
-    }
-]
-
-
-
 @application.route("/")
 @application.route("/home")
 def home():
     api_key = os.environ.get('GOOGLE_API_KEY')
     print(api_key)
-    return render_template('home.html', posts=posts, api_key=api_key)
+    return render_template('home.html', api_key=api_key)
 
 def get_user_image_file(user_id):
     """Get Image file associated with user_id"""
@@ -146,46 +133,75 @@ def login():
     return render_template('login.html', title='Login', form=form)
 
 
-@application.route('/get_weather', methods=['GET'])
-def weather():
-    return client.get_weather(request.args.get('city'), request.args.get('unit', 'C'))
+@application.route('/get_weather', methods=['POST'])
+def get_weather():
+    data = request.get_json()
+    city = data.get('city')
+    unit = data.get('unit', 'C')
+
+    response = get_response(city)
+    if response is None:
+        return jsonify({'error': 'Invalid city name'})
+
+    weather_summary = get_weather_summary(response, unit)
+    temperatures = get_temperatures(response, unit)
+    humidity = get_humidity(response)
+
+    json_response = {
+        'weather_summary': weather_summary[0],
+        'weather_description': weather_summary[1],
+        'high_temp_pm': temperatures[0],
+        'high_temp_am': temperatures[1],
+        'high_temp_night': temperatures[2],
+        'low_temp_pm': temperatures[3],
+        'low_temp_am': temperatures[4],
+        'low_temp_night': temperatures[5],
+        'humidity_pm': humidity[0],
+        'humidity_am': humidity[1],
+        'humidity_night': humidity[2]
+    }
+
+    return jsonify(json_response)
+
+
+
 
 @application.route('/weather_gpt', methods=['GET'])
 def weather_gpt():
     return render_template('weather_gpt.html')
     
+
 @application.route('/weather_chat', methods=['POST'])
 def weather_chat():
+    nlp = spacy.load('en_core_web_sm')
     openai.api_key = os.environ.get('OPEN_API_KEY')
     model_engine = 'text-davinci-002'
     user_input = request.json['message']
-    weather_response = client.get_weather(user_input, 'C')
     
-    if isinstance(weather_response, tuple) and weather_response[1] != 200:
-        return {'message': "Invalid message, retry again"}
-    weather_dict = json.loads(weather_response[0])
+    doc = nlp(user_input)
+    entities = [ent.text for ent in doc.ents]
 
-    high_temp_am = weather_dict['high_temp_am']
-    high_temp_night = weather_dict['high_temp_night']
-    high_temp_pm = weather_dict['high_temp_pm']
-    humidity_am = weather_dict['humidity_am']
-    humidity_night = weather_dict['humidity_night']
-    humidity_pm = weather_dict['humidity_pm']
-    low_temp_am = weather_dict['low_temp_am']
-    low_temp_night = weather_dict['low_temp_night']
-    low_temp_pm = weather_dict['low_temp_pm']
-    weather_description = weather_dict['weather_description']
-    weather_summary = weather_dict['weather_summary']
+    conversation_history = llmchat.get_conversation_history(user_input, entities)
 
+    weather_summary = get_weather_summary(response, unit='C')
+    temperatures = get_temperatures(response, unit='C')
+    humidity = get_humidity(response)
 
-    prompt = f"Describe what the weather is like in {user_input}. "
-    prompt += f"It is {weather_summary} with a high of {high_temp_pm}°C in the afternoon, {high_temp_am}°C in the morning, and {high_temp_night}°C at night. "
-    prompt += f"The low temperature ranges from {low_temp_am}°C in the morning, {low_temp_pm}°C in the afternoon, to {low_temp_night}°C at night. "
-    prompt += f"The humidity is {humidity_pm}% in the afternoon, {humidity_am}% in the morning, and {humidity_night}% at night. "
-    prompt += f"{weather_description}"
-    prompt += "What type of clothing would you recommend for this weather? Should I bring an umbrella? Please provide detailed information about the exact temperature and humidity."
-    prompt += f"Also, could you suggest some fun things to do around {user_input}? Please describe in detail."
+    weather_dict = {
+        'weather_summary': weather_summary[0],
+        'weather_description': weather_summary[1],
+        'high_temp_pm': temperatures[0],
+        'high_temp_am': temperatures[1],
+        'high_temp_night': temperatures[2],
+        'low_temp_pm': temperatures[3],
+        'low_temp_am': temperatures[4],
+        'low_temp_night': temperatures[5],
+        'humidity_pm': humidity[0],
+        'humidity_am': humidity[1],
+        'humidity_night': humidity[2]
+    }
 
+    prompt = llmchat.construct_prompt(user_input, weather_dict, conversation_history)
 
     response = openai.Completion.create(
         engine=model_engine,
@@ -195,9 +211,19 @@ def weather_chat():
         stop=None,
         temperature=0.7
     )
+
     bot_response = response.choices[0].text
 
-    return {'message': bot_response}
+    # Perform sentiment analysis on user input
+    user_sentiment = llmchat.perform_sentiment_analysis(user_input)
+
+    # Generate emotional response based on sentiment
+    emotional_response = llmchat.generate_emotional_response(bot_response, user_sentiment)
+
+    return jsonify({'message': emotional_response})
+
+
+
 
 @application.route("/logout")
 def logout():
@@ -412,3 +438,5 @@ def reset_token(token):
 @application.errorhandler(404)
 def not_found_error(error):
     return render_template('404.html'), 404
+
+

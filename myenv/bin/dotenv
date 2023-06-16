@@ -1,4 +1,4 @@
-#!/Users/lukehiura/WeatherExpress/WeatherVue/myenv/bin/python3.11
+#!/Users/lukehiura/WeatherVue/myenv/bin/python3.11
 # -*- coding: utf-8 -*-
 import re
 import sys

@@ -15,7 +15,6 @@ username = 'luquifquif'
 user_data = db.users.find_one({'username': username})
 
 if user_data:
-    # Extract the user_id from the user document
     user_id = user_data['_id']
     print('User ID:', user_id)
 else:
@@ -27,21 +26,4 @@ posts = {
     'content' : 'My first post',
     'user_id' : user_id
 }
-
 db.posts.insert_one(posts)
-
-# Example code for initiating database for User and Post:'
-
-# users = {
-#             'username' : self._username,
-#             'email' : self._email,
-#             'image_file' : self._image_file,
-#             'password' : self._password
-#         }
-
-# post_data = {
-#             'title': self.title,
-#             'date_posted': self.date_posted,
-#             'content': self.content,
-#             'user_id': self.user_id
-#         }
