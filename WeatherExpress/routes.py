@@ -9,29 +9,28 @@ from WeatherExpress.models import User, Post
 from WeatherExpress import application, mongo, bcrypt, mail
 from flask_login import login_user, current_user, logout_user, login_required, LoginManager
 from flask_mail import Message
+from WeatherExpress.llmforms import ConversationManager
 from PIL import Image
 from pymongo.errors import OperationFailure
 from math import ceil
 from bson import ObjectId
-import llmchat
 import sys
-sys.path.append('./protobuf')
 import openai
-import json
-import client
 import spacy
 
 
 # Uncomment for protbuf
+# sys.path.append('./protobuf')
 # from protobuf import grpc_client, weather_pb2_grpc, weather_pb2
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'protobuf')))
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'protobuf')))
+llmchat = ConversationManager()
 
 # Load environment variables from .env file if it exists
 if os.path.exists('.env'):
     from dotenv import load_dotenv
     load_dotenv()
-    print("Whoever's looking at this is stupid haha")
+    print("Loaded environment variables")
 
 @application.route("/")
 @application.route("/home")
@@ -170,22 +169,35 @@ def get_weather():
 def weather_gpt():
     return render_template('weather_gpt.html')
     
-
 @application.route('/weather_chat', methods=['POST'])
 def weather_chat():
     nlp = spacy.load('en_core_web_sm')
     openai.api_key = os.environ.get('OPEN_API_KEY')
     model_engine = 'text-davinci-002'
-    user_input = request.json['message']
     
+    data = request.get_json()
+    print(data)
+    city = data.get('city')
+    unit = data.get('unit', 'C')
+    
+    if not city:
+        return jsonify({'error': 'Invalid city name'})
+
+    response = get_response(city)
+    if response is None:
+        return jsonify({'error': 'Error retrieving weather data'})
+
+    weather_summary = get_weather_summary(response, unit)
+    temperatures = get_temperatures(response, unit)
+    humidity = get_humidity(response)
+
+    # Retrieve the user input from the request JSON data
+    user_input = data.get('message')
+
     doc = nlp(user_input)
     entities = [ent.text for ent in doc.ents]
 
     conversation_history = llmchat.get_conversation_history(user_input, entities)
-
-    weather_summary = get_weather_summary(response, unit='C')
-    temperatures = get_temperatures(response, unit='C')
-    humidity = get_humidity(response)
 
     weather_dict = {
         'weather_summary': weather_summary[0],
@@ -202,6 +214,7 @@ def weather_chat():
     }
 
     prompt = llmchat.construct_prompt(user_input, weather_dict, conversation_history)
+    print(prompt)
 
     response = openai.Completion.create(
         engine=model_engine,
@@ -221,8 +234,6 @@ def weather_chat():
     emotional_response = llmchat.generate_emotional_response(bot_response, user_sentiment)
 
     return jsonify({'message': emotional_response})
-
-
 
 
 @application.route("/logout")
